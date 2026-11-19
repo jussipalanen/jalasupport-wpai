@@ -1,79 +1,270 @@
+<div align="center">
+
 # JalaSupport AI
 
-AI-assisted customer support and ticket management application built on
-WordPress and the [Roots](https://roots.io/) ecosystem (Bedrock, Sage, Acorn).
+**An AI-assisted customer support and ticket management mini-project built on WordPress and the Roots ecosystem.**
 
-> Status: early development. See [ROADMAP.md](ROADMAP.md) for planned work.
+[![CI](https://github.com/jussipalanen/jalasupport-wpai/actions/workflows/ci.yml/badge.svg)](https://github.com/jussipalanen/jalasupport-wpai/actions/workflows/ci.yml)
 
-## Stack
+![PHP](https://img.shields.io/badge/PHP-8.3%2B-777BB4?logo=php&logoColor=white)
+![WordPress](https://img.shields.io/badge/WordPress-7.1-21759B?logo=wordpress&logoColor=white)
+![Bedrock](https://img.shields.io/badge/Roots-Bedrock-525DDC?logo=roots&logoColor=white)
+![Sage](https://img.shields.io/badge/Roots-Sage%2011-525DDC?logo=roots&logoColor=white)
+![Acorn](https://img.shields.io/badge/Roots-Acorn%206-525DDC?logo=roots&logoColor=white)
+![ACF](https://img.shields.io/badge/ACF-6.8-00E4BC?logo=wordpress&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-8.4-4479A1?logo=mysql&logoColor=white)
 
-- PHP 8.3+, WordPress (managed by Composer via Bedrock)
-- MySQL 8
-- Sage theme (Blade, Tailwind CSS, Vite) with Acorn
-- Azure OpenAI (server-side) for AI-assisted ticket processing
+![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4-06B6D4?logo=tailwindcss&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)
+![Blade](https://img.shields.io/badge/Blade-templates-FF2D20?logo=laravel&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
+![Pest](https://img.shields.io/badge/Tests-Pest%204-F472B6?logo=php&logoColor=white)
+![GitHub Actions](https://img.shields.io/badge/CI-GitHub%20Actions-2088FF?logo=githubactions&logoColor=white)
 
-## Repository layout
+</div>
+
+---
+
+## 📖 About
+
+JalaSupport AI is a small, working support desk prototype. Support agents log in
+with their WordPress accounts, create and manage tickets, filter and search them,
+and (as the project progresses) get AI help with categorizing, summarizing and
+replying to tickets.
+
+The project shows how WordPress can serve as the backend of a modern application
+rather than a traditional website:
+
+- **WordPress as an application platform.** A private `ticket` post type, ACF
+  metadata and a custom REST API with explicit authorization.
+- **Clean separation.** All business logic lives in the `jalasupport` plugin. The
+  Sage theme only handles presentation and can be replaced without losing data
+  or features.
+- **Modern tooling.** Composer-managed WordPress (Bedrock), Blade + Tailwind +
+  Vite (Sage), Docker-based local development, automated PR checks.
+- **Responsible AI.** AI suggestions are processed server-side and are never
+  applied without the user confirming them.
+
+> **Status:** early development. See [ROADMAP.md](ROADMAP.md) for what is done and what is planned.
+
+---
+
+<details>
+<summary><b>✨ Features</b></summary>
+
+<br>
+
+| | Feature | Status |
+|---|---|:-:|
+| 🔐 | WordPress authentication, Support Agent role, dedicated ticket capabilities | ✅ |
+| 🎫 | Private `ticket` post type (not public, not exposed via `wp/v2`) | ✅ |
+| 🗂️ | Ticket metadata with ACF: status, priority, category, customer, AI fields | ✅ |
+| 🔌 | REST API `jalasupport/v1`: list, search, filter, sort, paginate, CRUD, stats | ✅ |
+| ✅ | Server-side validation and sanitization, consistent JSON responses | ✅ |
+| 🤖 | Azure OpenAI ticket analysis (category, priority, summary, suggested reply) | 🚧 |
+| 🖥️ | SaaS-style UI: dashboard, ticket list, ticket details, create ticket, settings | 🚧 |
+| ☁️ | Azure App Service deployment | 📅 |
+
+✅ done · 🚧 in progress · 📅 planned
+
+**Ticket vocabulary**
+
+- **Statuses:** Open, In Progress, Resolved, Closed
+- **Priorities:** Low, Normal, High, Urgent
+- **Categories:** Technical Support, Account Issues, Billing, General Inquiry, Other
+
+</details>
+
+<details>
+<summary><b>🧱 Tech stack</b></summary>
+
+<br>
+
+| Layer | Technology |
+|---|---|
+| Backend | PHP 8.3+, WordPress 7.1, Roots Bedrock, Roots Acorn 6, Composer |
+| Data | MySQL 8.4, WordPress posts + post meta, Advanced Custom Fields 6 |
+| Frontend | Roots Sage 11, Blade, Tailwind CSS 4, Vite 8 |
+| AI | Azure OpenAI (server-side PHP, structured JSON output) |
+| Infrastructure | Docker, Docker Compose, Azure App Service, Azure Database for MySQL, Azure Container Registry |
+| Quality | Pest 4, Brain Monkey, Laravel Pint (PER coding style), GitHub Actions |
+
+</details>
+
+<details>
+<summary><b>🏗️ Architecture</b></summary>
+
+<br>
 
 ```text
-config/                 Bedrock configuration (application.php + per-environment overrides)
-web/                    Web root
-  app/                  wp-content equivalent (plugins, themes, mu-plugins, uploads)
-    themes/jalasupport/ Sage theme (presentation layer)
-  wp/                   WordPress core (installed by Composer, not tracked)
-tests/                  Project-level tests (Pest)
-docker/                 Docker image configuration (PHP, Apache)
+ Browser (Sage theme: Blade + Tailwind)
+        │  cookie auth + X-WP-Nonce
+        ▼
+ WordPress REST API ──► /wp-json/jalasupport/v1/*
+        │
+        ▼
+ jalasupport plugin
+   ├─ Http/Controllers   permission checks, request → response
+   ├─ Services           TicketValidator, TicketRepository (AI service planned)
+   ├─ Models             Ticket, status/priority/category enums
+   ├─ PostTypes, Fields  ticket CPT, post meta + ACF field group
+   └─ Support            capabilities, roles, installer
+        │
+        ▼
+ MySQL (wp_posts, wp_postmeta)          Azure OpenAI (server-side only)
 ```
 
-## Local development (Docker)
+Key decisions:
 
-Requirements: Docker Engine with Docker Compose v2.
+- **Business logic lives in the plugin, never in the theme.** The theme can be replaced.
+- **Tickets are hidden from core `wp/v2`.** Access goes through `jalasupport/v1`,
+  where every route checks capabilities on its own and responses contain only
+  whitelisted fields.
+- **WordPress-native storage.** Tickets are posts and their metadata is post meta.
+  Field definitions live in PHP, so they are version-controlled.
+- **Acorn is installed at the Bedrock root** and powers Sage. The plugin does not
+  depend on Acorn, so it keeps working when the theme changes.
 
-```bash
-cp .env.example .env          # set DB passwords and generate salts (https://roots.io/salts.html)
-docker compose up -d          # builds the PHP/Apache image, starts MySQL, installs Composer deps
+</details>
+
+<details>
+<summary><b>📁 Project structure</b></summary>
+
+<br>
+
+```text
+.
+├── .github/                 CI workflow, PR template, CODEOWNERS
+├── config/                  Bedrock configuration (application.php + environments/)
+├── docker/                  PHP/Apache image, PHP ini, entrypoint
+├── docs/                    Additional documentation (API reference)
+├── tests/                   Pest unit tests, Brain Monkey setup, WP stubs
+├── web/                     Web root
+│   ├── app/
+│   │   ├── mu-plugins/
+│   │   ├── plugins/
+│   │   │   └── jalasupport/ Application plugin (tracked)
+│   │   │       ├── app/     Fields, Http, Models, PostTypes, Services, Support
+│   │   │       └── jalasupport.php
+│   │   ├── themes/
+│   │   │   └── jalasupport/ Sage theme (presentation only)
+│   │   └── uploads/         Media (not tracked)
+│   └── wp/                  WordPress core (Composer-installed, not tracked)
+├── composer.json
+├── docker-compose.yml
+├── .env.example
+└── ROADMAP.md
 ```
 
-On first start, install WordPress:
+</details>
+
+<details>
+<summary><b>🚀 Getting started (Docker)</b></summary>
+
+<br>
+
+**Requirements:** Docker Engine with Docker Compose v2, Node.js 20.19+ or 22.12+ (for theme assets).
 
 ```bash
+# 1. Configure the environment
+cp .env.example .env          # set DB passwords and generate salts at https://roots.io/salts.html
+
+# 2. Start the stack (builds the image, starts MySQL, installs Composer dependencies)
+docker compose up -d
+
+# 3. Install WordPress
 docker compose exec -u www-data app wp core install \
   --url=http://localhost:8080 --title="JalaSupport AI" \
   --admin_user=admin --admin_email=admin@example.com --prompt=admin_password
+
+# 4. Activate the plugins and theme
+docker compose exec -u www-data app wp plugin activate advanced-custom-fields jalasupport
+docker compose exec -u www-data app wp theme activate jalasupport
+
+# 5. Build theme assets
+cd web/app/themes/jalasupport && npm install && npm run build
 ```
 
-The application is available at <http://localhost:8080> and the admin at
-<http://localhost:8080/wp/wp-admin/>.
+| URL | |
+|---|---|
+| <http://localhost:8080> | Application |
+| <http://localhost:8080/wp/wp-admin/> | WordPress admin |
+| <http://localhost:8080/wp-json/jalasupport/v1/> | REST API |
 
-Useful commands:
+Optional: create a support agent user.
+
+```bash
+docker compose exec -u www-data app wp user create agent agent@example.com --role=jalasupport_agent --prompt=user_pass
+```
+
+</details>
+
+<details>
+<summary><b>🐳 Docker reference</b></summary>
+
+<br>
+
+| Service | Description |
+|---|---|
+| `app` | PHP 8.3 + Apache, document root `web/`, port `${APP_PORT:-8080}`, Composer and WP-CLI included |
+| `db` | MySQL 8.4, persistent `db-data` volume, bound to `127.0.0.1:${DB_PORT:-3306}` |
 
 | Task | Command |
 |---|---|
 | Composer | `docker compose exec -u www-data app composer <cmd>` |
 | WP-CLI | `docker compose exec -u www-data app wp <cmd>` |
+| Tests | `docker compose exec -u www-data app composer test` |
 | Logs | `docker compose logs -f app` |
-| Stop | `docker compose down` (add `-v` to delete the database volume) |
+| Stop | `docker compose down` (add `-v` to also delete the database volume) |
 
-Services:
+`www-data` inside the container is remapped to `HOST_UID`/`HOST_GID` (default
+`1000`) so bind-mounted files stay writable.
 
-- `app` — PHP 8.3 + Apache, document root `web/`, port `${APP_PORT:-8080}`
-- `db` — MySQL 8.4 with a persistent `db-data` volume, bound to `127.0.0.1:${DB_PORT:-3306}`
+</details>
 
-The Docker image layout lives in `docker/`. `www-data` inside the container is
-remapped to `HOST_UID`/`HOST_GID` (default 1000) so bind-mounted files stay writable.
+<details>
+<summary><b>💻 Local setup without Docker</b></summary>
 
-## Local setup (without Docker)
+<br>
 
 ```bash
 composer install
 cp .env.example .env   # set DB_HOST, credentials, WP_HOME and salts
 ```
 
-Point your web server's document root at `web/`.
+Point your web server's document root at `web/` and install WordPress as above.
 
-## Theme (Sage) development
+</details>
 
-The `jalasupport` theme lives in `web/app/themes/jalasupport` and uses Sage 11
-(Blade, Tailwind CSS 4, Vite). Acorn and the theme's `App\\` namespace are
+<details>
+<summary><b>⚙️ Configuration</b></summary>
+
+<br>
+
+All configuration comes from environment variables (`.env` locally, App
+Service settings in Azure). **Never commit `.env`.**
+
+| Variable | Description |
+|---|---|
+| `DB_NAME`, `DB_USER`, `DB_PASSWORD` | Database credentials (Docker also uses them to create the database) |
+| `DB_ROOT_PASSWORD` | MySQL root password (Docker only) |
+| `DB_HOST` | Database host (forced to `db` inside Docker Compose) |
+| `DB_SSL` | Enable TLS for the database connection (required for Azure Database for MySQL) |
+| `DATABASE_URL` | Optional DSN instead of the individual `DB_*` variables |
+| `WP_ENV` | `development`, `staging` or `production` |
+| `WP_HOME`, `WP_SITEURL` | Site URLs (`WP_SITEURL` = `${WP_HOME}/wp`) |
+| `AUTH_KEY` … `NONCE_SALT` | WordPress salts |
+| `APP_PORT`, `DB_PORT`, `HOST_UID`, `HOST_GID` | Optional Docker Compose overrides |
+
+</details>
+
+<details>
+<summary><b>🎨 Theme development (Sage)</b></summary>
+
+<br>
+
+The `jalasupport` theme in `web/app/themes/jalasupport` is built on Sage 11
+(Blade, Tailwind CSS 4, Vite). Acorn and the theme's `App\` namespace are
 installed through the root `composer.json`, so the theme has no Composer
 dependencies of its own.
 
@@ -84,31 +275,97 @@ npm run build      # production assets in public/build
 npm run dev        # Vite dev server with hot reload
 ```
 
-Activate the theme once WordPress is installed:
+</details>
+
+<details>
+<summary><b>🔌 REST API</b></summary>
+
+<br>
+
+Base URL: `/wp-json/jalasupport/v1`. Every endpoint requires an authenticated user
+with ticket capabilities.
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/tickets` | List tickets: `search`, `status`, `priority`, `category`, `orderby`, `order`, `page`, `per_page` |
+| `GET` | `/tickets/stats` | Ticket counts by status |
+| `POST` | `/tickets` | Create a ticket |
+| `GET` | `/tickets/{id}` | Ticket details |
+| `PUT` / `PATCH` | `/tickets/{id}` | Update a ticket (partial) |
+| `DELETE` | `/tickets/{id}` | Move a ticket to the trash (administrators) |
+
+📄 Full reference: [docs/API.md](docs/API.md)
+
+</details>
+
+<details>
+<summary><b>🔒 Security</b></summary>
+
+<br>
+
+- Tickets are a non-public post type with dedicated capabilities (`read_tickets`,
+  `edit_tickets`, …). Subscribers, authors and editors cannot access them.
+- Every REST route has its own permission callback. Single-ticket routes don't
+  reveal whether a ticket exists to unauthorized users.
+- All input is validated and sanitized on the server. Registered post meta
+  sanitizes values a second time.
+- Secrets live only in environment variables. Azure credentials stay server-side
+  and are never sent to JavaScript.
+- Ticket content is treated as untrusted input to the AI. AI output is validated
+  and only saved after the user confirms it.
+- The plugin and theme file editors in wp-admin are disabled (Bedrock defaults).
+
+</details>
+
+<details>
+<summary><b>🧪 Testing and code quality</b></summary>
+
+<br>
 
 ```bash
-docker compose exec -u www-data app wp theme activate jalasupport
+composer validate   # composer.json sanity
+composer lint       # Laravel Pint (PER coding style); composer lint:fix to apply
+composer test       # Pest unit tests (Brain Monkey mocks WordPress functions)
 ```
 
-The theme is presentation only. Application logic belongs to the
-`jalasupport` plugin so the theme can be replaced without losing functionality.
+Unit tests cover enums, the post type and capability configuration, ACF field
+definitions and meta sanitization, ticket validation, model serialization, and
+REST authentication, authorization and handlers.
 
-## Quality checks
+</details>
 
-```bash
-composer validate
-composer lint     # Laravel Pint (PER coding style)
-composer test     # Pest
-```
+<details>
+<summary><b>🔁 Pull requests and CI</b></summary>
 
-## Pull requests and CI
+<br>
 
-Every pull request runs the lightweight checks in `.github/workflows/ci.yml`:
+Every pull request runs the lightweight checks in
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml):
 
-- **PHP** — `composer validate`, Pint code style, Pest unit tests (PHP 8.3)
-- **Theme** — `npm ci` and `npm run build` for the Sage theme
+- **PHP:** `composer validate`, Pint code style, Pest unit tests (PHP 8.3)
+- **Theme:** `npm ci` and `npm run build`
 
-Passing checks are a prerequisite, not a substitute, for human review. The PR
-template contains a review checklist and `.github/CODEOWNERS` requests a review
-from the code owner. To enforce both, enable branch protection for `main`
-(require status checks *PHP* and *Theme*, and require a pull request review).
+Passing checks are a prerequisite for human review, not a replacement for it.
+The [PR template](.github/pull_request_template.md) contains a review checklist,
+and [`CODEOWNERS`](.github/CODEOWNERS) requests a review from the code owner. To
+enforce both, enable branch protection on `main`: require the *PHP* and *Theme*
+status checks and a pull request review.
+
+Branch naming: `feature/…`, `fix/…`, `chore/…`.
+
+</details>
+
+<details>
+<summary><b>🗺️ Roadmap</b></summary>
+
+<br>
+
+1. **Foundation:** Bedrock, Docker, Sage, plugin skeleton ✅
+2. **Ticket management:** CPT, ACF fields, REST API, tests ✅
+3. **AI assistance:** Azure OpenAI service, analyze and suggest-reply endpoints 🚧
+4. **Application UI:** dashboard, ticket list, details, create, settings 🚧
+5. **Deployment:** production image, Azure App Service, documentation 📅
+
+See [ROADMAP.md](ROADMAP.md) for the detailed checklist.
+
+</details>
