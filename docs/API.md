@@ -43,9 +43,9 @@ Errors use the standard WordPress format:
 
 ```json
 {
-  "code": "jalasupport_validation_failed",
-  "message": "The submitted ticket data is invalid.",
-  "data": { "status": 422, "errors": { "customer_email": "Enter a valid email address." } }
+    "code": "jalasupport_validation_failed",
+    "message": "The submitted ticket data is invalid.",
+    "data": { "status": 422, "errors": { "customer_email": "Enter a valid email address." } }
 }
 ```
 
@@ -62,20 +62,20 @@ Errors use the standard WordPress format:
 
 ```json
 {
-  "id": 12,
-  "title": "Cannot log in",
-  "description": "I reset my password but still cannot log in.",
-  "status": "open",
-  "status_label": "Open",
-  "priority": "high",
-  "priority_label": "High",
-  "category": "account_issues",
-  "category_label": "Account Issues",
-  "customer": { "name": "Jane Doe", "email": "jane@example.com" },
-  "ai": { "summary": "", "suggested_reply": "" },
-  "author_id": 1,
-  "created_at": "2026-11-20T10:00:00+00:00",
-  "updated_at": "2026-11-20T10:00:00+00:00"
+    "id": 12,
+    "title": "Cannot log in",
+    "description": "I reset my password but still cannot log in.",
+    "status": "open",
+    "status_label": "Open",
+    "priority": "high",
+    "priority_label": "High",
+    "category": "account_issues",
+    "category_label": "Account Issues",
+    "customer": { "name": "Jane Doe", "email": "jane@example.com" },
+    "ai": { "summary": "", "suggested_reply": "" },
+    "author_id": 1,
+    "created_at": "2026-11-20T10:00:00+00:00",
+    "updated_at": "2026-11-20T10:00:00+00:00"
 }
 ```
 
@@ -131,18 +131,18 @@ suggestion, the client sends a regular `PATCH /tickets/{id}` (for example
 
 ```json
 {
-  "data": {
+    "data": {
     "ticket_id": 12,
     "suggestions": {
-      "category": "account_issues",
-      "category_label": "Account Issues",
-      "priority": "high",
-      "priority_label": "High",
-      "summary": "The customer cannot log in after resetting their password.",
-      "suggested_reply": "Hello Jane, thank you for contacting us..."
+            "category": "account_issues",
+            "category_label": "Account Issues",
+            "priority": "high",
+            "priority_label": "High",
+            "summary": "The customer cannot log in after resetting their password.",
+            "suggested_reply": "Hello Jane, thank you for contacting us..."
     },
     "applied": false
-  }
+    }
 }
 ```
 
@@ -179,7 +179,7 @@ and are rate limited per user (20 requests per 10 minutes by default; filters
 
 ```bash
 curl -u admin:"xxxx xxxx xxxx xxxx xxxx xxxx" \
-  -H "Content-Type: application/json" \
-  -d '{"title":"Cannot log in","description":"Password reset fails","customer_name":"Jane","customer_email":"jane@example.com"}' \
-  http://localhost:8080/wp-json/jalasupport/v1/tickets
+    -H "Content-Type: application/json" \
+    -d '{"title":"Cannot log in","description":"Password reset fails","customer_name":"Jane","customer_email":"jane@example.com"}' \
+    http://localhost:8080/wp-json/jalasupport/v1/tickets
 ```

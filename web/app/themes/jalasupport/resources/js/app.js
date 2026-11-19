@@ -7,9 +7,9 @@ import toast from './components/toast.js';
 import { badgeClasses } from './components/helpers.js';
 
 Alpine.store('ui', {
-  badgeClass(kind, value) {
-    return badgeClasses[kind]?.[value] ?? 'bg-slate-50 text-slate-600 ring-slate-200';
-  },
+    badgeClass(kind, value) {
+        return badgeClasses[kind]?.[value] ?? 'bg-slate-50 text-slate-600 ring-slate-200';
+    },
 });
 
 Alpine.data('dashboard', dashboard);

@@ -1,10 +1,10 @@
 {
-  "preset": "per",
-  "exclude": [
-    "web/wp",
-    "web/app/mu-plugins/bedrock-disallow-indexing",
-    "web/app/plugins",
-    "web/app/themes/jalasupport/vendor",
-    "web/app/themes/jalasupport/node_modules"
-  ]
+    "preset": "per",
+    "exclude": [
+        "web/wp",
+        "web/app/mu-plugins/bedrock-disallow-indexing",
+        "web/app/plugins",
+        "web/app/themes/jalasupport/vendor",
+        "web/app/themes/jalasupport/node_modules"
+    ]
 }
