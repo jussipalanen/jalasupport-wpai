@@ -6,7 +6,7 @@ reviewable increments.
 ## Phase 1 — Foundation
 
 - [x] Bedrock project scaffold
-- [ ] Docker Compose local development environment
+- [x] Docker Compose local development environment
 - [ ] Sage theme with Acorn, Tailwind CSS and Vite
 - [ ] JalaSupport plugin skeleton
 

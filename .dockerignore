@@ -1,0 +1,13 @@
+.git
+.github
+.env
+.env.*
+!.env.example
+node_modules
+**/node_modules
+vendor
+web/wp
+web/app/uploads/*
+web/app/cache
+*.log
+.phpunit.cache
