@@ -13,7 +13,7 @@ reviewable increments.
 ## Phase 2 — Ticket management
 
 - [x] `ticket` custom post type with restricted capabilities
-- [ ] ACF field group for ticket metadata (status, priority, category, customer, AI fields)
+- [x] ACF field group for ticket metadata (status, priority, category, customer, AI fields)
 - [ ] REST API under `/wp-json/jalasupport/v1/` with explicit permission checks
 - [ ] Tests for validation and REST authorization
 
