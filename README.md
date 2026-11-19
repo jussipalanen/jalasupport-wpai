@@ -61,7 +61,7 @@ rather than a traditional website:
 | 🗂️ | Ticket metadata with ACF: status, priority, category, customer, AI fields | ✅ |
 | 🔌 | REST API `jalasupport/v1`: list, search, filter, sort, paginate, CRUD, stats | ✅ |
 | ✅ | Server-side validation and sanitization, consistent JSON responses | ✅ |
-| 🤖 | Azure OpenAI ticket analysis (category, priority, summary, suggested reply) | 🚧 |
+| 🤖 | Azure OpenAI ticket analysis API (category, priority, summary, suggested reply) | ✅ |
 | 🖥️ | SaaS-style UI: dashboard, ticket list, ticket details, create ticket, settings | 🚧 |
 | ☁️ | Azure App Service deployment | 📅 |
 
@@ -105,7 +105,7 @@ rather than a traditional website:
         ▼
  jalasupport plugin
    ├─ Http/Controllers   permission checks, request → response
-   ├─ Services           TicketValidator, TicketRepository (AI service planned)
+   ├─ Services           TicketValidator, TicketRepository, AI/AzureOpenAIService
    ├─ Models             Ticket, status/priority/category enums
    ├─ PostTypes, Fields  ticket CPT, post meta + ACF field group
    └─ Support            capabilities, roles, installer
@@ -281,6 +281,12 @@ Service settings in Azure). **Never commit `.env`.**
 | `WP_ENV` | `development`, `staging` or `production` |
 | `WP_HOME`, `WP_SITEURL` | Site URLs (`WP_SITEURL` = `${WP_HOME}/wp`) |
 | `AUTH_KEY` … `NONCE_SALT` | WordPress salts |
+| `AZURE_OPENAI_ENDPOINT` | `https://<resource>.openai.azure.com` (AI is disabled until configured) |
+| `AZURE_OPENAI_DEPLOYMENT` | Chat model deployment name (a model that supports structured outputs, e.g. GPT-4o / GPT-4o mini) |
+| `AZURE_OPENAI_API_KEY` | API key. Leave empty when using a managed identity |
+| `AZURE_OPENAI_USE_MANAGED_IDENTITY` | `true` to authenticate with the App Service managed identity (Entra ID) |
+| `AZURE_OPENAI_API_VERSION` | Default `2024-10-21` |
+| `AZURE_OPENAI_TIMEOUT` | Request timeout in seconds (default `30`) |
 | `APP_PORT`, `DB_PORT`, `HOST_UID`, `HOST_GID` | Optional Docker Compose overrides |
 
 </details>
@@ -320,6 +326,8 @@ with ticket capabilities.
 | `GET` | `/tickets/{id}` | Ticket details |
 | `PUT` / `PATCH` | `/tickets/{id}` | Update a ticket (partial) |
 | `DELETE` | `/tickets/{id}` | Move a ticket to the trash (administrators) |
+| `POST` | `/tickets/{id}/ai/analyze` | AI suggestions: category, priority, summary, reply (not saved) |
+| `POST` | `/tickets/{id}/ai/suggest-reply` | AI suggested reply (not saved) |
 
 📄 Full reference: [docs/API.md](docs/API.md)
 
@@ -357,7 +365,9 @@ composer test       # Pest unit tests (Brain Monkey mocks WordPress functions)
 
 Unit tests cover enums, the post type and capability configuration, ACF field
 definitions and meta sanitization, ticket validation, model serialization, and
-REST authentication, authorization and handlers.
+REST authentication, authorization and handlers, AI response validation, the
+Azure OpenAI client (request shape, prompt-injection boundaries, error mapping,
+managed identity) and AI rate limiting.
 
 </details>
 
@@ -389,7 +399,7 @@ Branch naming: `feature/…`, `fix/…`, `chore/…`.
 
 1. **Foundation:** Bedrock, Docker, Sage, plugin skeleton ✅
 2. **Ticket management:** CPT, ACF fields, REST API, tests ✅
-3. **AI assistance:** Azure OpenAI service, analyze and suggest-reply endpoints 🚧
+3. **AI assistance:** Azure OpenAI service, analyze and suggest-reply endpoints ✅
 4. **Application UI:** dashboard, ticket list, details, create, settings 🚧
 5. **Deployment:** production image, Azure App Service, documentation 📅
 

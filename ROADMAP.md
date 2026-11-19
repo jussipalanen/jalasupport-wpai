@@ -19,8 +19,8 @@ reviewable increments.
 
 ## Phase 3 — AI assistance
 
-- [ ] `AzureOpenAIService` with structured JSON responses and validation
-- [ ] Analyze and suggest-reply endpoints (suggestions require user confirmation)
+- [x] `AzureOpenAIService` with structured JSON responses and validation
+- [x] Analyze and suggest-reply endpoints (suggestions require user confirmation)
 
 ## Phase 4 — Application UI
 

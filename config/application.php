@@ -139,6 +139,19 @@ Config::define('LOGGED_IN_SALT', env('LOGGED_IN_SALT'));
 Config::define('NONCE_SALT', env('NONCE_SALT'));
 
 /**
+ * JalaSupport: Azure OpenAI
+ * Keep credentials in the environment (App Service settings / Key Vault references).
+ * Leave AZURE_OPENAI_API_KEY empty and set AZURE_OPENAI_USE_MANAGED_IDENTITY=true
+ * to authenticate with Microsoft Entra ID through the App Service managed identity.
+ */
+Config::define('AZURE_OPENAI_ENDPOINT', env('AZURE_OPENAI_ENDPOINT') ?: '');
+Config::define('AZURE_OPENAI_API_KEY', env('AZURE_OPENAI_API_KEY') ?: '');
+Config::define('AZURE_OPENAI_DEPLOYMENT', env('AZURE_OPENAI_DEPLOYMENT') ?: '');
+Config::define('AZURE_OPENAI_API_VERSION', env('AZURE_OPENAI_API_VERSION') ?: '2024-10-21');
+Config::define('AZURE_OPENAI_USE_MANAGED_IDENTITY', (bool) env('AZURE_OPENAI_USE_MANAGED_IDENTITY'));
+Config::define('AZURE_OPENAI_TIMEOUT', (int) (env('AZURE_OPENAI_TIMEOUT') ?: 30));
+
+/**
  * Custom Settings
  */
 Config::define('AUTOMATIC_UPDATER_DISABLED', true);

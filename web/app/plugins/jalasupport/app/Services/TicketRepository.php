@@ -9,6 +9,7 @@ use JalaSupport\Models\Ticket;
 use JalaSupport\Models\TicketMeta;
 use JalaSupport\Models\TicketStatus;
 use JalaSupport\PostTypes\TicketPostType;
+use JalaSupport\Support\Logger;
 use WP_Error;
 use WP_Post;
 use WP_Query;
@@ -50,6 +51,8 @@ class TicketRepository
         ], true);
 
         if ($postId instanceof WP_Error) {
+            Logger::error('ticket_create_failed', ['error' => $postId->get_error_code()]);
+
             return $this->persistenceError();
         }
 
@@ -72,6 +75,8 @@ class TicketRepository
             $result = wp_update_post(['ID' => $ticket->id] + $postData, true);
 
             if ($result instanceof WP_Error) {
+                Logger::error('ticket_update_failed', ['ticket_id' => $ticket->id, 'error' => $result->get_error_code()]);
+
                 return $this->persistenceError();
             }
         }

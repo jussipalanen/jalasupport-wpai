@@ -21,6 +21,9 @@ abstract class TestCase extends BaseTestCase
         Monkey\Functions\stubTranslationFunctions();
         Monkey\Functions\stubEscapeFunctions();
 
+        // Keep diagnostic logging out of the test output.
+        ini_set('error_log', '/dev/null');
+
         if (! defined('ABSPATH')) {
             define('ABSPATH', sys_get_temp_dir() . '/');
         }

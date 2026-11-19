@@ -123,6 +123,58 @@ Partial update: send only the fields to change. Same rules as create.
 
 Moves the ticket to the trash (recoverable in wp-admin). Administrators only.
 
+### `POST /tickets/{id}/ai/analyze`
+
+Asks Azure OpenAI for suggestions. **Nothing is saved.** To accept a
+suggestion, the client sends a regular `PATCH /tickets/{id}` (for example
+`{"category": "billing", "ai_summary": "..."}`) after the user confirms it.
+
+```json
+{
+  "data": {
+    "ticket_id": 12,
+    "suggestions": {
+      "category": "account_issues",
+      "category_label": "Account Issues",
+      "priority": "high",
+      "priority_label": "High",
+      "summary": "The customer cannot log in after resetting their password.",
+      "suggested_reply": "Hello Jane, thank you for contacting us..."
+    },
+    "applied": false
+  }
+}
+```
+
+### `POST /tickets/{id}/ai/suggest-reply`
+
+Same as above but only returns `suggestions.suggested_reply`.
+
+**AI permissions and errors.** AI endpoints require `edit_post` on the ticket
+and are rate limited per user (20 requests per 10 minutes by default; filters
+`jalasupport_ai_rate_limit` and `jalasupport_ai_rate_window`).
+
+| Status | Code | Meaning |
+|---|---|---|
+| 422 | `jalasupport_ai_content_filtered` | Blocked by Azure content filtering |
+| 429 | `jalasupport_ai_rate_limited` | Per-user limit reached |
+| 429 | `jalasupport_ai_busy` | Azure OpenAI throttled the request |
+| 502 | `jalasupport_ai_failed` | Network or authentication error, or an Azure error |
+| 502 | `jalasupport_ai_invalid_response` | The model output failed validation |
+| 503 | `jalasupport_ai_unavailable` | AI is not configured |
+
+**How the AI integration is protected**
+
+- Credentials stay on the server (API key or managed identity token) and are never sent to the browser.
+- The system prompts are version-controlled in `web/app/plugins/jalasupport/resources/prompts/`.
+- Ticket content is sent as a JSON document in the user message, and the system
+  prompt tells the model to treat it as data. Instructions inside a ticket cannot
+  change the application's behavior: output is limited to a strict JSON schema
+  and validated server-side (enums, types, lengths, sanitization).
+- The customer email address is never sent to the model.
+- Logs contain only ticket IDs, HTTP statuses and error codes. Ticket content,
+  prompts and responses are never logged.
+
 ## Example
 
 ```bash
