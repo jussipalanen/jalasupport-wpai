@@ -33,7 +33,7 @@ reviewable increments.
 ## Phase 5 — Deployment
 
 - [ ] Production Docker image
-- [ ] GitHub Actions CI (lint, tests, build)
+- [x] GitHub Actions CI (lint, tests, build)
 - [ ] Azure App Service + Azure Database for MySQL + Azure Container Registry
 - [ ] Deployment documentation
 

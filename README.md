@@ -100,3 +100,15 @@ composer validate
 composer lint     # Laravel Pint (PER coding style)
 composer test     # Pest
 ```
+
+## Pull requests and CI
+
+Every pull request runs the lightweight checks in `.github/workflows/ci.yml`:
+
+- **PHP** — `composer validate`, Pint code style, Pest unit tests (PHP 8.3)
+- **Theme** — `npm ci` and `npm run build` for the Sage theme
+
+Passing checks are a prerequisite, not a substitute, for human review. The PR
+template contains a review checklist and `.github/CODEOWNERS` requests a review
+from the code owner. To enforce both, enable branch protection for `main`
+(require status checks *PHP* and *Theme*, and require a pull request review).
