@@ -54,9 +54,9 @@ final class TicketFields
     public function metaSanitizers(): array
     {
         return [
-            TicketMeta::STATUS => static fn($value): string => TicketStatus::tryFrom((string) $value)?->value ?? TicketStatus::default()->value,
-            TicketMeta::PRIORITY => static fn($value): string => TicketPriority::tryFrom((string) $value)?->value ?? TicketPriority::default()->value,
-            TicketMeta::CATEGORY => static fn($value): string => TicketCategory::tryFrom((string) $value)?->value ?? TicketCategory::default()->value,
+            TicketMeta::STATUS => static fn($value): string => (TicketStatus::tryFrom((string) $value) ?? TicketStatus::default())->value,
+            TicketMeta::PRIORITY => static fn($value): string => (TicketPriority::tryFrom((string) $value) ?? TicketPriority::default())->value,
+            TicketMeta::CATEGORY => static fn($value): string => (TicketCategory::tryFrom((string) $value) ?? TicketCategory::default())->value,
             TicketMeta::CUSTOMER_NAME => static fn($value): string => sanitize_text_field((string) $value),
             TicketMeta::CUSTOMER_EMAIL => static fn($value): string => sanitize_email((string) $value),
             TicketMeta::AI_SUMMARY => static fn($value): string => sanitize_textarea_field((string) $value),

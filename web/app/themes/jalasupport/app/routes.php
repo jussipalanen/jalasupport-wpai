@@ -15,6 +15,8 @@ const ROUTES_VERSION = '1';
 
 /**
  * Route name => Blade view (relative to resources/views).
+ *
+ * @return array<string, string>
  */
 function app_views(): array
 {

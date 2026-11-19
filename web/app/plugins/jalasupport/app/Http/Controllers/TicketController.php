@@ -189,9 +189,10 @@ final class TicketController extends Controller
      */
     private function input(WP_REST_Request $request): array
     {
-        $body = $request->get_json_params();
+        // get_json_params() returns null when the request has no JSON body.
+        $body = (array) $request->get_json_params();
 
-        return is_array($body) && $body !== [] ? $body : (array) $request->get_body_params();
+        return $body !== [] ? $body : (array) $request->get_body_params();
     }
 
     /**

@@ -1,0 +1,11 @@
+{
+    "name": "jalasupport-ai",
+    "private": true,
+    "description": "Repository-wide tooling. Theme assets live in web/app/themes/jalasupport.",
+    "scripts": {
+        "lint:editorconfig": "editorconfig-checker"
+    },
+    "devDependencies": {
+        "editorconfig-checker": "^7.0.0"
+    }
+}

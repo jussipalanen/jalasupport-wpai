@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   php:
-    name: PHP (validate, lint, test)
+    name: PHP (validate, lint, analyse, test)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -42,11 +42,14 @@ jobs:
       - name: Code style (Pint)
         run: composer lint
 
+      - name: Static analysis (PHPStan)
+        run: composer analyse -- --no-progress
+
       - name: Tests (Pest)
         run: composer test
 
   theme:
-    name: Theme (build)
+    name: Theme (lint, build)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     defaults:
@@ -63,4 +66,25 @@ jobs:
 
       - run: npm ci --no-audit --no-fund
 
-      - run: npm run build
+      - name: Lint JavaScript (ESLint)
+        run: npm run lint
+
+      - name: Build assets
+        run: npm run build
+
+  editorconfig:
+    name: Editorconfig (indentation, whitespace)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - run: npm ci --no-audit --no-fund
+
+      - run: npm run lint:editorconfig

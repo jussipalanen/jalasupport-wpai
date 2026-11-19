@@ -8,6 +8,8 @@ namespace App;
 
 use Illuminate\Support\Facades\Vite;
 
+use function Roots\public_path;
+
 /**
  * Inject styles into the block editor.
  *

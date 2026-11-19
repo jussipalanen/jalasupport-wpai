@@ -1,0 +1,18 @@
+# Editor configuration for the whole repository: 4-space indentation everywhere.
+# Enforced in CI by editorconfig-checker (npm run lint:editorconfig).
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = true
+
+[*.md]
+trim_trailing_whitespace = false
+
+# YAML nests sequence items at odd columns with 4 spaces; keep the YAML convention.
+[*.{yml,yaml}]
+indent_size = 2

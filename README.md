@@ -20,6 +20,8 @@
 ![Alpine.js](https://img.shields.io/badge/Alpine.js-3-8BC0D0?logo=alpinedotjs&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
 ![Pest](https://img.shields.io/badge/Tests-Pest%204-F472B6?logo=php&logoColor=white)
+![PHPStan](https://img.shields.io/badge/PHPStan-level%206-4F5B93?logo=php&logoColor=white)
+![ESLint](https://img.shields.io/badge/ESLint-10-4B32C3?logo=eslint&logoColor=white)
 ![GitHub Actions](https://img.shields.io/badge/CI-GitHub%20Actions-2088FF?logo=githubactions&logoColor=white)
 
 </div>
@@ -89,7 +91,7 @@ rather than a traditional website:
 | Frontend | Roots Sage 11, Blade templates and components, Tailwind CSS 4, Alpine.js 3, Vite 8 |
 | AI | Azure OpenAI (server-side PHP, structured JSON output) |
 | Infrastructure | Docker, Docker Compose, Azure App Service, Azure Database for MySQL, Azure Container Registry |
-| Quality | Pest 4, Brain Monkey, Laravel Pint (PER coding style), GitHub Actions |
+| Quality | Pest 4, Brain Monkey, Laravel Pint, PHPStan, ESLint, editorconfig-checker, GitHub Actions |
 
 </details>
 
@@ -195,8 +197,8 @@ Optional: create a support agent user.
 ```bash
 docker compose up -d
 docker compose exec -u www-data app wp core install \
-  --url=http://localhost:8080 --title="JalaSupport AI" \
-  --admin_user=admin --admin_email=admin@example.com --prompt=admin_password
+    --url=http://localhost:8080 --title="JalaSupport AI" \
+    --admin_user=admin --admin_email=admin@example.com --prompt=admin_password
 docker compose exec -u www-data app wp plugin activate advanced-custom-fields jalasupport
 docker compose exec -u www-data app wp theme activate jalasupport
 cd web/app/themes/jalasupport && npm install && npm run build
@@ -229,9 +231,9 @@ Run `./dev help` for the full list.
 | `./dev composer <args>` | Composer in the container |
 | `./dev wp <args>` | WP-CLI in the container |
 | `./dev test` | Pest test suite |
-| `./dev lint [--fix]` | Pint code style check (or fix) |
+| `./dev lint [--fix]` | All linters: Pint, PHPStan, ESLint, editorconfig (`--fix` auto-fixes style) |
 | `./dev npm <args>` | npm in the theme directory (host) |
-| `./dev assets` | `npm install` + `npm run build` for the theme |
+| `./dev assets` | `npm install` (root tooling and theme) + theme `npm run build` |
 | `./dev vite` | Vite dev server for the theme |
 
 </details>
@@ -385,11 +387,25 @@ with ticket capabilities.
 
 <br>
 
-```bash
-composer validate   # composer.json sanity
-composer lint       # Laravel Pint (PER coding style); composer lint:fix to apply
-composer test       # Pest unit tests (Brain Monkey mocks WordPress functions)
-```
+All code must pass the linters before it is committed; CI enforces the same
+checks on every pull request.
+
+| Tool | Scope | Command | Config |
+|---|---|---|---|
+| Laravel Pint | PHP code style (PER) | `composer lint` / `composer lint:fix` | `pint.json` |
+| PHPStan (level 6) + WordPress stubs | PHP static analysis | `composer analyse` | `phpstan.neon.dist` |
+| ESLint + Stylistic | Theme JavaScript | `npm run lint` / `npm run lint:fix` (theme dir) | `web/app/themes/jalasupport/eslint.config.js` |
+| editorconfig-checker | Indentation and whitespace in every file | `npm run lint:editorconfig` (root) | `.editorconfig`, `.editorconfig-checker.json` |
+| Pest + Brain Monkey | PHP unit tests | `composer test` | `phpunit.xml.dist`, `tests/` |
+
+Run everything at once with `./dev lint` (add `--fix` to auto-fix style first).
+
+**Formatting conventions**
+
+- 4-space indentation for all files: PHP, Blade, JavaScript, CSS, JSON, XML,
+  shell, Dockerfile and config files.
+- YAML uses 2 spaces, because nested sequence items can't line up on a 4-space grid.
+- LF line endings, UTF-8, a final newline, no trailing whitespace.
 
 Unit tests cover enums, the post type and capability configuration, ACF field
 definitions and meta sanitization, ticket validation, model serialization, and
@@ -407,14 +423,15 @@ managed identity) and AI rate limiting.
 Every pull request runs the lightweight checks in
 [`.github/workflows/ci.yml`](.github/workflows/ci.yml):
 
-- **PHP:** `composer validate`, Pint code style, Pest unit tests (PHP 8.3)
-- **Theme:** `npm ci` and `npm run build`
+- **PHP:** `composer validate`, Pint code style, PHPStan static analysis, Pest unit tests (PHP 8.3)
+- **Theme:** ESLint and `npm run build`
+- **Editorconfig:** indentation and whitespace rules for every file
 
 Passing checks are a prerequisite for human review, not a replacement for it.
 The [PR template](.github/pull_request_template.md) contains a review checklist,
 and [`CODEOWNERS`](.github/CODEOWNERS) requests a review from the code owner. To
-enforce both, enable branch protection on `main`: require the *PHP* and *Theme*
-status checks and a pull request review.
+enforce both, enable branch protection on `main`: require the *PHP*, *Theme* and
+*Editorconfig* status checks and a pull request review.
 
 Branch naming: `feature/…`, `fix/…`, `chore/…`.
 
