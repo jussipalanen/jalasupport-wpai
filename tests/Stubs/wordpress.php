@@ -70,3 +70,56 @@ if (! class_exists('WP_Post')) {
         }
     }
 }
+
+if (! class_exists('WP_REST_Request')) {
+    class WP_REST_Request
+    {
+        /**
+         * @param  array<string, mixed>  $params  Route/query parameters.
+         * @param  array<string, mixed>  $json  JSON body parameters.
+         */
+        public function __construct(private array $params = [], private array $json = []) {}
+
+        public function get_param(string $key): mixed
+        {
+            return $this->json[$key] ?? $this->params[$key] ?? null;
+        }
+
+        /** @return array<string, mixed> */
+        public function get_json_params(): array
+        {
+            return $this->json;
+        }
+
+        /** @return array<string, mixed> */
+        public function get_body_params(): array
+        {
+            return [];
+        }
+    }
+}
+
+if (! class_exists('WP_REST_Response')) {
+    class WP_REST_Response
+    {
+        /** @var array<string, string> */
+        public array $headers = [];
+
+        public function __construct(public mixed $data = null, public int $status = 200) {}
+
+        public function header(string $key, string $value): void
+        {
+            $this->headers[$key] = $value;
+        }
+
+        public function get_data(): mixed
+        {
+            return $this->data;
+        }
+
+        public function get_status(): int
+        {
+            return $this->status;
+        }
+    }
+}

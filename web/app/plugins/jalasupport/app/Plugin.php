@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace JalaSupport;
 
 use JalaSupport\Fields\TicketFields;
+use JalaSupport\Http\Controllers\TicketController;
 use JalaSupport\PostTypes\TicketPostType;
+use JalaSupport\Services\TicketRepository;
+use JalaSupport\Services\TicketValidator;
 use JalaSupport\Support\Installer;
 
 /**
@@ -18,5 +21,11 @@ final class Plugin
         add_action('init', [Installer::class, 'maybeUpgrade'], 5);
         add_action('init', [new TicketPostType(), 'register']);
         (new TicketFields())->register();
+
+        add_action('rest_api_init', static function (): void {
+            $tickets = new TicketRepository();
+
+            (new TicketController($tickets, new TicketValidator()))->registerRoutes();
+        });
     }
 }

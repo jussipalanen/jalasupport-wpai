@@ -14,8 +14,8 @@ reviewable increments.
 
 - [x] `ticket` custom post type with restricted capabilities
 - [x] ACF field group for ticket metadata (status, priority, category, customer, AI fields)
-- [ ] REST API under `/wp-json/jalasupport/v1/` with explicit permission checks
-- [ ] Tests for validation and REST authorization
+- [x] REST API under `/wp-json/jalasupport/v1/` with explicit permission checks
+- [x] Tests for validation and REST authorization
 
 ## Phase 3 — AI assistance
 

@@ -19,7 +19,7 @@ use WP_Query;
  * Expects already validated and sanitized data (see TicketValidator).
  * Authorization is the caller's responsibility.
  */
-final class TicketRepository
+class TicketRepository
 {
     public const MAX_PER_PAGE = 50;
 
