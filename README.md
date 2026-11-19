@@ -18,6 +18,7 @@ WordPress and the [Roots](https://roots.io/) ecosystem (Bedrock, Sage, Acorn).
 config/                 Bedrock configuration (application.php + per-environment overrides)
 web/                    Web root
   app/                  wp-content equivalent (plugins, themes, mu-plugins, uploads)
+    themes/jalasupport/ Sage theme (presentation layer)
   wp/                   WordPress core (installed by Composer, not tracked)
 tests/                  Project-level tests (Pest)
 docker/                 Docker image configuration (PHP, Apache)
@@ -68,6 +69,29 @@ cp .env.example .env   # set DB_HOST, credentials, WP_HOME and salts
 ```
 
 Point your web server's document root at `web/`.
+
+## Theme (Sage) development
+
+The `jalasupport` theme lives in `web/app/themes/jalasupport` and uses Sage 11
+(Blade, Tailwind CSS 4, Vite). Acorn and the theme's `App\\` namespace are
+installed through the root `composer.json`, so the theme has no Composer
+dependencies of its own.
+
+```bash
+cd web/app/themes/jalasupport
+npm install
+npm run build      # production assets in public/build
+npm run dev        # Vite dev server with hot reload
+```
+
+Activate the theme once WordPress is installed:
+
+```bash
+docker compose exec -u www-data app wp theme activate jalasupport
+```
+
+The theme is presentation only. Application logic belongs to the
+`jalasupport` plugin so the theme can be replaced without losing functionality.
 
 ## Quality checks
 

@@ -7,7 +7,7 @@ reviewable increments.
 
 - [x] Bedrock project scaffold
 - [x] Docker Compose local development environment
-- [ ] Sage theme with Acorn, Tailwind CSS and Vite
+- [x] Sage theme with Acorn, Tailwind CSS and Vite
 - [ ] JalaSupport plugin skeleton
 
 ## Phase 2 — Ticket management
