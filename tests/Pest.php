@@ -10,4 +10,6 @@
 |
 */
 
+require_once __DIR__ . '/Stubs/wordpress.php';
+
 uses(Tests\TestCase::class)->in('Unit');
