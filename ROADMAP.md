@@ -24,11 +24,11 @@ reviewable increments.
 
 ## Phase 4 — Application UI
 
-- [ ] Dashboard (ticket counts, recent activity)
-- [ ] Ticket list (search, filters, sorting, pagination)
-- [ ] Ticket details (status/priority controls, AI suggestions with accept/edit/reject)
-- [ ] Create ticket
-- [ ] Settings
+- [x] Dashboard (ticket counts, recent activity)
+- [x] Ticket list (search, filters, sorting, pagination)
+- [x] Ticket details (status/priority controls, AI suggestions with accept/edit/reject)
+- [x] Create ticket
+- [x] Settings
 
 ## Phase 5 — Deployment
 

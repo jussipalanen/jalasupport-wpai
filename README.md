@@ -17,6 +17,7 @@
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4-06B6D4?logo=tailwindcss&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)
 ![Blade](https://img.shields.io/badge/Blade-templates-FF2D20?logo=laravel&logoColor=white)
+![Alpine.js](https://img.shields.io/badge/Alpine.js-3-8BC0D0?logo=alpinedotjs&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
 ![Pest](https://img.shields.io/badge/Tests-Pest%204-F472B6?logo=php&logoColor=white)
 ![GitHub Actions](https://img.shields.io/badge/CI-GitHub%20Actions-2088FF?logo=githubactions&logoColor=white)
@@ -62,7 +63,8 @@ rather than a traditional website:
 | 🔌 | REST API `jalasupport/v1`: list, search, filter, sort, paginate, CRUD, stats | ✅ |
 | ✅ | Server-side validation and sanitization, consistent JSON responses | ✅ |
 | 🤖 | Azure OpenAI ticket analysis API (category, priority, summary, suggested reply) | ✅ |
-| 🖥️ | SaaS-style UI: dashboard, ticket list, ticket details, create ticket, settings | 🚧 |
+| 🖥️ | SaaS-style UI (Blade + Tailwind + Alpine.js): dashboard, ticket list, ticket details, create ticket, settings | ✅ |
+| ✨ | AI panel with accept / edit / reject for every suggestion | ✅ |
 | ☁️ | Azure App Service deployment | 📅 |
 
 ✅ done · 🚧 in progress · 📅 planned
@@ -84,7 +86,7 @@ rather than a traditional website:
 |---|---|
 | Backend | PHP 8.3+, WordPress 7.1, Roots Bedrock, Roots Acorn 6, Composer |
 | Data | MySQL 8.4, WordPress posts + post meta, Advanced Custom Fields 6 |
-| Frontend | Roots Sage 11, Blade, Tailwind CSS 4, Vite 8 |
+| Frontend | Roots Sage 11, Blade templates and components, Tailwind CSS 4, Alpine.js 3, Vite 8 |
 | AI | Azure OpenAI (server-side PHP, structured JSON output) |
 | Infrastructure | Docker, Docker Compose, Azure App Service, Azure Database for MySQL, Azure Container Registry |
 | Quality | Pest 4, Brain Monkey, Laravel Pint (PER coding style), GitHub Actions |
@@ -97,8 +99,8 @@ rather than a traditional website:
 <br>
 
 ```text
- Browser (Sage theme: Blade + Tailwind)
-        │  cookie auth + X-WP-Nonce
+ Browser: Sage theme (Blade views + Alpine.js components)
+        │  fetch() with cookie auth + X-WP-Nonce
         ▼
  WordPress REST API ──► /wp-json/jalasupport/v1/*
         │
@@ -308,6 +310,32 @@ npm run build      # production assets in public/build
 npm run dev        # Vite dev server with hot reload
 ```
 
+**Application routes** (login required; pretty permalinks must be enabled, which `./dev setup` does):
+
+| URL | Blade view | Notes |
+|---|---|---|
+| `/` | `app/dashboard` | Ticket counts and recent activity |
+| `/tickets/` | `app/tickets/index` | Search, filters, sorting, pagination (state kept in the URL) |
+| `/tickets/new/` | `app/tickets/create` | Create ticket form |
+| `/tickets/{id}/` | `app/tickets/show` | Details, status/priority/category controls, editing, AI panel |
+| `/settings/` | `app/settings` | Read-only configuration (administrators) |
+
+**How the frontend is built**
+
+- All markup lives in Blade files: `layouts/`, `sections/` (sidebar, topbar),
+  `partials/` (AI panel), `app/` (pages) and reusable anonymous components in
+  `components/` (`<x-card>`, `<x-button>`, `<x-badge>`, `<x-field>`,
+  `<x-icon>`, `<x-notice>`, `<x-page-header>`, `<x-ai-badge>`, `<x-toast>`).
+- View Composers in `app/View/Composers` provide navigation, the current user,
+  ticket options and non-sensitive client configuration.
+- Alpine.js components in `resources/js/components` load and change data
+  through the `jalasupport/v1` REST API, so the REST layer enforces
+  authorization for every action. Dynamic content is rendered with `x-text`
+  (never `x-html`).
+- AI suggestions use a separate violet style and an "AI suggestion" badge. They
+  are saved only when the user clicks **Accept**, and the UI works fully when AI
+  is not configured.
+
 </details>
 
 <details>
@@ -400,7 +428,7 @@ Branch naming: `feature/…`, `fix/…`, `chore/…`.
 1. **Foundation:** Bedrock, Docker, Sage, plugin skeleton ✅
 2. **Ticket management:** CPT, ACF fields, REST API, tests ✅
 3. **AI assistance:** Azure OpenAI service, analyze and suggest-reply endpoints ✅
-4. **Application UI:** dashboard, ticket list, details, create, settings 🚧
+4. **Application UI:** dashboard, ticket list, details, create, settings ✅
 5. **Deployment:** production image, Azure App Service, documentation 📅
 
 See [ROADMAP.md](ROADMAP.md) for the detailed checklist.

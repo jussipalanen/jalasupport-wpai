@@ -7,10 +7,15 @@
 namespace App;
 
 /**
- * Add "… Continued" to the excerpt.
- *
- * @return string
+ * Body classes for the application shell.
  */
-add_filter('excerpt_more', function () {
-    return sprintf(' &hellip; <a href="%s">%s</a>', get_permalink(), __('Continued', 'jalasupport'));
+add_filter('body_class', function (array $classes) {
+    $route = current_route();
+
+    if ($route !== null) {
+        $classes[] = 'jalasupport-app';
+        $classes[] = 'route-' . sanitize_html_class($route);
+    }
+
+    return $classes;
 });

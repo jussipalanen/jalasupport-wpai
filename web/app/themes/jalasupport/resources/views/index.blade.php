@@ -1,23 +1,12 @@
+{{-- Fallback for WordPress requests outside the application routes. --}}
 @extends('layouts.app')
 
 @section('content')
-  @include('partials.page-header')
-
-  @if (! have_posts())
-    <x-alert type="warning">
-      {!! __('Sorry, no results were found.', 'jalasupport') !!}
-    </x-alert>
-
-    {!! get_search_form(false) !!}
-  @endif
-
-  @while(have_posts()) @php(the_post())
-    @includeFirst(['partials.content-' . get_post_type(), 'partials.content'])
-  @endwhile
-
-  {!! get_the_posts_navigation() !!}
-@endsection
-
-@section('sidebar')
-  @include('sections.sidebar')
+  <x-card class="mx-auto max-w-lg">
+    <div class="py-8 text-center">
+      <h1 class="text-lg font-semibold text-slate-900">{{ $siteName }}</h1>
+      <p class="mt-2 text-sm text-slate-500">{{ __('This site is the JalaSupport support application.', 'jalasupport') }}</p>
+      <x-button class="mt-6" :href="home_url('/')">{{ __('Go to dashboard', 'jalasupport') }}</x-button>
+    </div>
+  </x-card>
 @endsection

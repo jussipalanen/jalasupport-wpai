@@ -1,5 +1,5 @@
 <!doctype html>
-<html @php(language_attributes())>
+<html @php(language_attributes()) class="h-full bg-slate-50">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,28 +9,34 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
   </head>
 
-  <body @php(body_class())>
+  <body @php(body_class('h-full text-slate-800 antialiased'))>
     @php(wp_body_open())
 
-    <div id="app">
-      <a class="sr-only focus:not-sr-only" href="#main">
-        {{ __('Skip to content', 'jalasupport') }}
-      </a>
+    <a class="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:m-2 focus:rounded-md focus:bg-white focus:px-3 focus:py-2 focus:shadow" href="#main">
+      {{ __('Skip to content', 'jalasupport') }}
+    </a>
 
-      @include('sections.header')
+    <script type="application/json" id="jalasupport-config">{!! wp_json_encode($clientConfig, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
 
-      <main id="main" class="main">
-        @yield('content')
-      </main>
+    <div x-data="{ sidebarOpen: false }" class="min-h-full">
+      @include('sections.sidebar')
 
-      @hasSection('sidebar')
-        <aside class="sidebar">
-          @yield('sidebar')
-        </aside>
-      @endif
+      <div class="lg:pl-64">
+        @include('sections.topbar')
 
-      @include('sections.footer')
+        <main id="main" class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+          @unless ($pluginActive)
+            <x-notice type="warning" class="mb-6">
+              {{ __('The JalaSupport plugin is not active. Activate it to manage tickets.', 'jalasupport') }}
+            </x-notice>
+          @endunless
+
+          @yield('content')
+        </main>
+      </div>
     </div>
+
+    <x-toast />
 
     @php(do_action('get_footer'))
     @php(wp_footer())
