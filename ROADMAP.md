@@ -8,11 +8,11 @@ reviewable increments.
 - [x] Bedrock project scaffold
 - [x] Docker Compose local development environment
 - [x] Sage theme with Acorn, Tailwind CSS and Vite
-- [ ] JalaSupport plugin skeleton
+- [x] JalaSupport plugin skeleton
 
 ## Phase 2 — Ticket management
 
-- [ ] `ticket` custom post type with restricted capabilities
+- [x] `ticket` custom post type with restricted capabilities
 - [ ] ACF field group for ticket metadata (status, priority, category, customer, AI fields)
 - [ ] REST API under `/wp-json/jalasupport/v1/` with explicit permission checks
 - [ ] Tests for validation and REST authorization
