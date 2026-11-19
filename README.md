@@ -138,6 +138,7 @@ Key decisions:
 ├── config/                  Bedrock configuration (application.php + environments/)
 ├── docker/                  PHP/Apache image, PHP ini, entrypoint
 ├── docs/                    Additional documentation (API reference)
+├── dev                      Developer helper script (Docker Compose wrapper)
 ├── tests/                   Pest unit tests, Brain Monkey setup, WP stubs
 ├── web/                     Web root
 │   ├── app/
@@ -166,23 +167,10 @@ Key decisions:
 **Requirements:** Docker Engine with Docker Compose v2, Node.js 20.19+ or 22.12+ (for theme assets).
 
 ```bash
-# 1. Configure the environment
-cp .env.example .env          # set DB passwords and generate salts at https://roots.io/salts.html
-
-# 2. Start the stack (builds the image, starts MySQL, installs Composer dependencies)
-docker compose up -d
-
-# 3. Install WordPress
-docker compose exec -u www-data app wp core install \
-  --url=http://localhost:8080 --title="JalaSupport AI" \
-  --admin_user=admin --admin_email=admin@example.com --prompt=admin_password
-
-# 4. Activate the plugins and theme
-docker compose exec -u www-data app wp plugin activate advanced-custom-fields jalasupport
-docker compose exec -u www-data app wp theme activate jalasupport
-
-# 5. Build theme assets
-cd web/app/themes/jalasupport && npm install && npm run build
+cp .env.example .env   # 1. set DB passwords and generate salts at https://roots.io/salts.html
+./dev up               # 2. build the image, start MySQL, install Composer dependencies
+./dev setup            # 3. install WordPress, activate ACF, the plugin and the theme
+./dev assets           # 4. install theme npm dependencies and build assets
 ```
 
 | URL | |
@@ -194,8 +182,55 @@ cd web/app/themes/jalasupport && npm install && npm run build
 Optional: create a support agent user.
 
 ```bash
-docker compose exec -u www-data app wp user create agent agent@example.com --role=jalasupport_agent --prompt=user_pass
+./dev wp user create agent agent@example.com --role=jalasupport_agent --prompt=user_pass
 ```
+
+<details>
+<summary>Without the helper script</summary>
+
+<br>
+
+```bash
+docker compose up -d
+docker compose exec -u www-data app wp core install \
+  --url=http://localhost:8080 --title="JalaSupport AI" \
+  --admin_user=admin --admin_email=admin@example.com --prompt=admin_password
+docker compose exec -u www-data app wp plugin activate advanced-custom-fields jalasupport
+docker compose exec -u www-data app wp theme activate jalasupport
+cd web/app/themes/jalasupport && npm install && npm run build
+```
+
+</details>
+
+</details>
+
+<details>
+<summary><b>🛠️ Developer commands (<code>./dev</code>)</b></summary>
+
+<br>
+
+`./dev` is a small Bash wrapper around Docker Compose and the project tooling.
+Run `./dev help` for the full list.
+
+| Command | Description |
+|---|---|
+| `./dev up` | Start the stack in the background (builds on first run) |
+| `./dev down` | Stop and remove containers (database volume is kept) |
+| `./dev restart [svc]` | Restart all services or one (`app`, `db`) |
+| `./dev build` | Rebuild the app image |
+| `./dev ps` / `./dev status` | Service status |
+| `./dev logs [svc]` | Follow logs (default `app`) |
+| `./dev shell` | Shell in the app container |
+| `./dev db` | MySQL shell |
+| `./dev reset` | Stop and **delete** the database volume (asks for confirmation) |
+| `./dev setup` | Install WordPress and activate ACF, plugin and theme |
+| `./dev composer <args>` | Composer in the container |
+| `./dev wp <args>` | WP-CLI in the container |
+| `./dev test` | Pest test suite |
+| `./dev lint [--fix]` | Pint code style check (or fix) |
+| `./dev npm <args>` | npm in the theme directory (host) |
+| `./dev assets` | `npm install` + `npm run build` for the theme |
+| `./dev vite` | Vite dev server for the theme |
 
 </details>
 
@@ -208,14 +243,6 @@ docker compose exec -u www-data app wp user create agent agent@example.com --rol
 |---|---|
 | `app` | PHP 8.3 + Apache, document root `web/`, port `${APP_PORT:-8080}`, Composer and WP-CLI included |
 | `db` | MySQL 8.4, persistent `db-data` volume, bound to `127.0.0.1:${DB_PORT:-3306}` |
-
-| Task | Command |
-|---|---|
-| Composer | `docker compose exec -u www-data app composer <cmd>` |
-| WP-CLI | `docker compose exec -u www-data app wp <cmd>` |
-| Tests | `docker compose exec -u www-data app composer test` |
-| Logs | `docker compose logs -f app` |
-| Stop | `docker compose down` (add `-v` to also delete the database volume) |
 
 `www-data` inside the container is remapped to `HOST_UID`/`HOST_GID` (default
 `1000`) so bind-mounted files stay writable.
