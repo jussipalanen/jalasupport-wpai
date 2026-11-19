@@ -1,0 +1,14 @@
+# PHPStan configuration (WordPress stubs are loaded by szepeviktor/phpstan-wordpress
+# through phpstan/extension-installer).
+parameters:
+    level: 6
+    paths:
+        - web/app/plugins/jalasupport
+        - web/app/themes/jalasupport/app
+        - web/app/themes/jalasupport/functions.php
+    excludePaths:
+        - web/app/themes/jalasupport/node_modules (?)
+        - web/app/themes/jalasupport/vendor (?)
+    bootstrapFiles:
+        - tests/phpstan/bootstrap.php
+    tmpDir: .phpstan-cache

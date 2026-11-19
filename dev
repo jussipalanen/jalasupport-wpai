@@ -1,0 +1,160 @@
+#!/usr/bin/env bash
+#
+# JalaSupport AI development helper.
+# Thin wrapper around Docker Compose and the common project commands.
+#
+# Usage: ./dev <command> [args...]    (./dev help for the list)
+
+set -euo pipefail
+
+cd "$(dirname "$0")"
+
+THEME_DIR="web/app/themes/jalasupport"
+COMPOSE=(docker compose)
+
+# Run a command inside the app container as www-data (TTY only when interactive).
+app_exec() {
+    local tty=()
+    [ -t 0 ] && [ -t 1 ] || tty=(-T)
+    "${COMPOSE[@]}" exec "${tty[@]}" -u www-data app "$@"
+}
+
+ensure_env() {
+    if [ ! -f .env ]; then
+        echo "No .env file found. Create one first: cp .env.example .env" >&2
+        exit 1
+    fi
+}
+
+env_value() {
+    # Read a single value from .env without sourcing it.
+    grep -E "^$1=" .env | tail -n1 | cut -d= -f2- | sed -e "s/^['\"]//" -e "s/['\"]$//"
+}
+
+usage() {
+    cat <<'EOF'
+JalaSupport AI development helper
+
+Usage: ./dev <command> [args...]
+
+Docker
+    up                Start the stack in the background (builds on first run)
+    down              Stop and remove the containers (database volume is kept)
+    restart [svc]     Restart all services or one service (app, db)
+    build             Rebuild the app image
+    ps | status       Show service status
+    logs [svc]        Follow logs (default: app)
+    shell             Open a shell in the app container
+    db                Open a MySQL shell
+    reset             Stop the stack and DELETE the database volume (asks first)
+
+Project
+    setup             Install WordPress, activate ACF, plugin and theme
+    composer <args>   Run Composer in the app container
+    wp <args>         Run WP-CLI in the app container
+    test              Run the Pest test suite
+    lint [--fix]      Run all linters: Pint, PHPStan, ESLint, editorconfig (--fix auto-fixes)
+    npm <args>        Run npm in the theme directory (on the host)
+    assets            Install npm dependencies (root tooling + theme) and build assets
+    vite              Start the Vite dev server for the theme
+EOF
+}
+
+command="${1:-help}"
+shift || true
+
+case "$command" in
+    up)
+        ensure_env
+        "${COMPOSE[@]}" up -d "$@"
+        echo "Application: $(env_value WP_HOME || echo http://localhost:8080)"
+        ;;
+    down)
+        "${COMPOSE[@]}" down "$@"
+        ;;
+    restart)
+        "${COMPOSE[@]}" restart "$@"
+        ;;
+    build)
+        "${COMPOSE[@]}" build "$@"
+        ;;
+    ps | status)
+        "${COMPOSE[@]}" ps "$@"
+        ;;
+    logs)
+        "${COMPOSE[@]}" logs -f "${@:-app}"
+        ;;
+    shell)
+        app_exec bash
+        ;;
+    db)
+        ensure_env
+        "${COMPOSE[@]}" exec db sh -c 'mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"'
+        ;;
+    reset)
+        read -r -p "This deletes the local database volume. Continue? [y/N] " answer
+        if [[ "$answer" =~ ^[Yy]$ ]]; then
+            "${COMPOSE[@]}" down -v
+        else
+            echo "Aborted."
+        fi
+        ;;
+    setup)
+        ensure_env
+        url="$(env_value WP_HOME)"
+        if app_exec wp core is-installed 2>/dev/null; then
+            echo "WordPress is already installed."
+        else
+            read -r -p "Admin username [admin]: " admin_user
+            read -r -p "Admin email [admin@example.com]: " admin_email
+            app_exec wp core install \
+                --url="${url:-http://localhost:8080}" \
+                --title="JalaSupport AI" \
+                --admin_user="${admin_user:-admin}" \
+                --admin_email="${admin_email:-admin@example.com}" \
+                --prompt=admin_password
+        fi
+        app_exec wp plugin activate advanced-custom-fields jalasupport
+        app_exec wp theme activate jalasupport
+        app_exec wp rewrite structure '/%postname%/' --hard
+        ;;
+    composer)
+        app_exec composer "$@"
+        ;;
+    wp)
+        app_exec wp "$@"
+        ;;
+    test)
+        app_exec composer test -- "$@"
+        ;;
+    lint)
+        if [ "${1:-}" = "--fix" ]; then
+            app_exec composer lint:fix
+            (cd "$THEME_DIR" && npm run lint:fix)
+        fi
+        app_exec composer lint
+        app_exec composer analyse
+        (cd "$THEME_DIR" && npm run lint)
+        npm run lint:editorconfig
+        echo "All linters passed."
+        ;;
+    npm)
+        (cd "$THEME_DIR" && npm "$@")
+        ;;
+    assets)
+        npm install
+        (cd "$THEME_DIR" && npm install && npm run build)
+        ;;
+    vite)
+        (cd "$THEME_DIR" && npm run dev)
+        ;;
+    help | -h | --help)
+        usage
+        ;;
+    *)
+        echo "Unknown command: $command" >&2
+        echo >&2
+        usage >&2
+        exit 1
+        ;;
+esac

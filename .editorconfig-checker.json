@@ -1,0 +1,16 @@
+{
+    "Exclude": [
+        "\\.lock$",
+        "package-lock\\.json$",
+        "\\.md$",
+        "\\.png$",
+        "^LICENSE",
+        "^vendor/",
+        "^web/wp/",
+        "^web/app/uploads/",
+        "^web/app/mu-plugins/bedrock-disallow-indexing/",
+        "/node_modules/",
+        "/public/build/",
+        "^\\.phpstan-cache/"
+    ]
+}
