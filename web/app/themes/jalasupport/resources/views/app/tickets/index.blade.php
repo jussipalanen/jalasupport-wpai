@@ -114,13 +114,49 @@
             </template>
         </div>
 
-        {{-- Pagination --}}
-        <nav class="mt-4 flex items-center justify-between" x-show="meta.pages > 1" x-cloak aria-label="{{ __('Pagination', 'jalasupport') }}">
-            <x-button variant="secondary" icon="chevron-left" @click="go(meta.page - 1)" x-bind:disabled="meta.page <= 1 || loading">{{ __('Previous', 'jalasupport') }}</x-button>
-            <p class="text-sm text-slate-400" x-text="pageLabel()"></p>
-            <x-button variant="secondary" @click="go(meta.page + 1)" x-bind:disabled="meta.page >= meta.pages || loading">
-                {{ __('Next', 'jalasupport') }} <x-icon name="chevron-right" class="size-4" />
-            </x-button>
-        </nav>
+        {{-- Pagination and page size --}}
+        <div class="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between" x-show="meta.total > 0" x-cloak>
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-400">
+                <p aria-live="polite" x-text="rangeLabel()"></p>
+
+                <label class="flex items-center gap-2">
+                    <span>{{ __('Rows per page', 'jalasupport') }}</span>
+                    <select class="form-input w-auto py-1.5 pr-8" :value="perPage" @change="setPerPage($event.target.value)" x-bind:disabled="loading">
+                        <template x-for="option in perPageOptions" :key="option">
+                            <option :value="option" :selected="option === perPage" x-text="option"></option>
+                        </template>
+                    </select>
+                </label>
+            </div>
+
+            <nav class="flex items-center gap-1" x-show="meta.pages > 1" aria-label="{{ __('Pagination', 'jalasupport') }}">
+                <x-button variant="secondary" class="px-2.5" @click="go(meta.page - 1)" x-bind:disabled="meta.page <= 1 || loading">
+                    <x-icon name="chevron-left" class="size-4" />
+                    <span class="sr-only sm:not-sr-only">{{ __('Previous', 'jalasupport') }}</span>
+                </x-button>
+
+                <template x-for="(page, index) in pages()" :key="index">
+                    <span>
+                        <span x-show="page === null" class="px-1.5 text-sm text-slate-500" aria-hidden="true">&hellip;</span>
+                        <button
+                            type="button"
+                            x-show="page !== null"
+                            class="min-w-9 rounded-md px-2.5 py-2 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 disabled:cursor-not-allowed"
+                            :class="page === meta.page ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-300 ring-1 ring-inset ring-white/10 hover:bg-white/10'"
+                            :aria-current="page === meta.page ? 'page' : null"
+                            :aria-label="@js(__('Page', 'jalasupport')) + ' ' + page"
+                            @click="go(page)"
+                            x-bind:disabled="loading"
+                            x-text="page"
+                        ></button>
+                    </span>
+                </template>
+
+                <x-button variant="secondary" class="px-2.5" @click="go(meta.page + 1)" x-bind:disabled="meta.page >= meta.pages || loading">
+                    <span class="sr-only sm:not-sr-only">{{ __('Next', 'jalasupport') }}</span>
+                    <x-icon name="chevron-right" class="size-4" />
+                </x-button>
+            </nav>
+        </div>
     </div>
 @endsection

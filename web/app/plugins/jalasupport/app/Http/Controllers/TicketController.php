@@ -214,7 +214,7 @@ final class TicketController extends Controller
             'orderby' => ['type' => 'string', 'enum' => array_keys(TicketRepository::SORTABLE), 'default' => 'created_at'],
             'order' => ['type' => 'string', 'enum' => ['asc', 'desc'], 'default' => 'desc'],
             'page' => ['type' => 'integer', 'minimum' => 1, 'default' => 1],
-            'per_page' => ['type' => 'integer', 'minimum' => 1, 'maximum' => TicketRepository::MAX_PER_PAGE, 'default' => 20],
+            'per_page' => ['type' => 'integer', 'minimum' => 1, 'maximum' => TicketRepository::MAX_PER_PAGE, 'default' => TicketRepository::DEFAULT_PER_PAGE],
         ];
     }
 }

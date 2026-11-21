@@ -36,7 +36,7 @@ Collections add pagination metadata (also sent as `X-WP-Total` and
 `X-WP-TotalPages` headers):
 
 ```json
-{ "data": [ ... ], "meta": { "total": 42, "pages": 3, "page": 1, "per_page": 20 } }
+{ "data": [ ... ], "meta": { "total": 42, "pages": 2, "page": 1, "per_page": 25 } }
 ```
 
 Errors use the standard WordPress format:
@@ -98,7 +98,7 @@ Allowed values:
 | `orderby` | `created_at` \| `updated_at` \| `title` | `created_at` | |
 | `order` | `asc` \| `desc` | `desc` | |
 | `page` | integer | 1 | |
-| `per_page` | integer | 20 | Maximum 50 |
+| `per_page` | integer | 25 | 1–100. The UI offers 10, 25, 50 and 100 |
 
 ### `GET /tickets/stats`
 
