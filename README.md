@@ -386,6 +386,21 @@ npm run dev        # Vite dev server with hot reload
 | `/tickets/{id}/` | `app/tickets/show` | Details, status/priority/category controls, editing, AI panel |
 | `/settings/` | `app/settings` | Read-only configuration (administrators) |
 
+**Design**
+
+- Dark theme: dark navigation (sidebar and topbar) and dark panels on a
+  near-black workspace. `color-scheme: dark` makes native form controls
+  match.
+- Space backdrop with a light synthwave touch (nebula glows, starfield,
+  striped retro sun, perspective grid), drawn as inline SVG
+  (`partials/backdrop.blade.php`, `resources/css/backdrop.css`). It needs no
+  image requests and stays sharp at any size. The app shows it as a header
+  band behind page titles; the login screen shows it full screen.
+- Subtle animations (twinkling stars, glow) turn off automatically for users
+  who prefer reduced motion.
+- The WordPress login screen is branded through login hooks in
+  `app/login.php` and a separate Vite entry (`resources/css/login.css`).
+
 **How the frontend is built**
 
 - All markup lives in Blade files: `layouts/`, `sections/` (sidebar, topbar),
