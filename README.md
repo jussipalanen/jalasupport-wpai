@@ -86,7 +86,7 @@ rather than a traditional website:
 
 | Layer | Technology |
 |---|---|
-| Backend | PHP 8.3+, WordPress 7.1, Roots Bedrock, Roots Acorn 6, Composer |
+| Backend | PHP 8.3+ (Docker runtime: PHP 8.5), WordPress 7.1, Roots Bedrock, Roots Acorn 6, Composer |
 | Data | MySQL 8.4, WordPress posts + post meta, Advanced Custom Fields 6 |
 | Frontend | Roots Sage 11, Blade templates and components, Tailwind CSS 4, Alpine.js 3, Vite 8 |
 | AI | Azure OpenAI (server-side PHP, structured JSON output) |
@@ -261,12 +261,19 @@ Run `./dev help` for the full list.
 
 | Service | Description |
 |---|---|
-| `app` | PHP 8.3 + Apache, document root `web/`, port `${APP_PORT:-8080}`, Composer and WP-CLI included |
+| `app` | PHP 8.5 + Apache (configurable with `PHP_VERSION`), document root `web/`, port `${APP_PORT:-8080}`, Composer and WP-CLI included |
 | `db` | MySQL 8.4, persistent `db-data` volume, bound to `127.0.0.1:${DB_PORT:-3306}` |
 | `phpmyadmin` | phpMyAdmin 5.2 web GUI for MySQL on `127.0.0.1:${PMA_PORT:-8081}`. Signs in automatically as `DB_USER`, local development only |
 
 `www-data` inside the container is remapped to `HOST_UID`/`HOST_GID` (default
 `1000`) so bind-mounted files stay writable.
+
+**Versions.** The Dockerfile reads every version from a build argument
+(`PHP_VERSION`, `COMPOSER_VERSION`, `WP_CLI_VERSION`), and Compose passes them
+from `.env`, along with `MYSQL_VERSION` and `PHPMYADMIN_VERSION`. The WP-CLI
+download is verified against its published SHA-512 checksum. PHP 8.5 is the
+default: PHP 8.6 was tested but isn't supported yet (WP-CLI deprecation
+notices, and the official image ships without `mbstring`).
 
 </details>
 
@@ -344,7 +351,8 @@ Service settings in Azure). **Never commit `.env`.**
 | `AZURE_OPENAI_USE_MANAGED_IDENTITY` | `true` to authenticate with the App Service managed identity (Entra ID) |
 | `AZURE_OPENAI_API_VERSION` | Default `2024-10-21` |
 | `AZURE_OPENAI_TIMEOUT` | Request timeout in seconds (default `30`) |
-| `APP_PORT`, `DB_PORT`, `HOST_UID`, `HOST_GID` | Optional Docker Compose overrides |
+| `APP_PORT`, `DB_PORT`, `PMA_PORT`, `HOST_UID`, `HOST_GID` | Optional Docker Compose overrides |
+| `PHP_VERSION`, `COMPOSER_VERSION`, `WP_CLI_VERSION`, `MYSQL_VERSION`, `PHPMYADMIN_VERSION` | Image and tool versions (defaults `8.5`, `2.11.2`, `2.12.0`, `8.4`, `5.2`). Rebuild with `./dev build` after changing them |
 
 </details>
 
@@ -476,7 +484,7 @@ managed identity) and AI rate limiting.
 Every pull request runs the lightweight checks in
 [`.github/workflows/ci.yml`](.github/workflows/ci.yml):
 
-- **PHP:** `composer validate`, Pint code style, PHPStan static analysis, Pest unit tests (PHP 8.3)
+- **PHP 8.3 and 8.5:** `composer validate`, Pint code style, PHPStan static analysis, Pest unit tests (the minimum supported version and the Docker runtime)
 - **Theme:** ESLint and `npm run build`
 - **Editorconfig:** indentation and whitespace rules for every file
 
