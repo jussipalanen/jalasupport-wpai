@@ -49,7 +49,7 @@ Docker
     reset             Stop the stack and DELETE the database volume (asks first)
 
 Project
-    setup             Install WordPress, activate ACF, plugin and theme
+    setup             Install WordPress, activate ACF, Wordfence, plugin and theme
     composer <args>   Run Composer in the app container
     wp <args>         Run WP-CLI in the app container, e.g. ./dev wp plugin list
     test              Run the Pest test suite
@@ -118,7 +118,10 @@ case "$command" in
                 --admin_email="${admin_email:-admin@example.com}" \
                 --prompt=admin_password
         fi
-        app_exec wp plugin activate advanced-custom-fields jalasupport
+        app_exec wp plugin activate advanced-custom-fields wordfence jalasupport
+        # Wordfence disables application passwords by default; the REST API
+        # documents them for API clients, so keep them enabled (HTTPS only).
+        app_exec wp eval 'if (class_exists("wfConfig")) { wfConfig::set("loginSec_disableApplicationPasswords", 0); }'
         app_exec wp theme activate jalasupport
         app_exec wp rewrite structure '/%postname%/' --hard
         ;;

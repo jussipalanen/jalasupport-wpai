@@ -7,6 +7,10 @@ web/app/upgrade
 web/app/uploads/*
 !web/app/uploads/.gitkeep
 web/app/cache/*
+# Wordfence runtime data and optional extended-protection firewall files
+web/app/wflogs/
+web/wordfence-waf.php
+web/.user.ini
 
 # WordPress
 web/wp

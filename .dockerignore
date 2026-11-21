@@ -9,5 +9,8 @@ vendor
 web/wp
 web/app/uploads/*
 web/app/cache
+web/app/wflogs
+web/wordfence-waf.php
+web/.user.ini
 *.log
 .phpunit.cache
