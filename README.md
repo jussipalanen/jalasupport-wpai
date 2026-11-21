@@ -447,6 +447,7 @@ Branch naming: `feature/…`, `fix/…`, `chore/…`.
 3. **AI assistance:** Azure OpenAI service, analyze and suggest-reply endpoints ✅
 4. **Application UI:** dashboard, ticket list, details, create, settings ✅
 5. **Deployment:** production image, Azure App Service, documentation 📅
+6. **MCP integration (post-MVP):** WordPress MCP Adapter with read-only ticket abilities, resources and prompts 📅
 
 See [ROADMAP.md](ROADMAP.md) for the detailed checklist.
 

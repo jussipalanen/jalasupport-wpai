@@ -37,6 +37,21 @@ reviewable increments.
 - [ ] Azure App Service + Azure Database for MySQL + Azure Container Registry
 - [ ] Deployment documentation
 
+## Phase 6 — MCP integration (post-MVP)
+
+Expose JalaSupport to MCP clients (e.g. Claude Code, Claude Desktop) through the
+official WordPress MCP Adapter and the core Abilities API.
+
+- [ ] Install `wordpress/mcp-adapter` (^0.7, pinned while pre-1.0) via Composer
+- [ ] Dedicated "JalaSupport" MCP server exposing only `jalasupport/*` abilities
+- [ ] Read-only abilities: list tickets, get ticket, ticket stats
+- [ ] Resources: ticket vocabulary and triage guidelines
+- [ ] Prompts: triage ticket, draft reply
+- [ ] Unit tests for ability permissions, input validation and output
+- [ ] Documentation: local (WP-CLI) and remote (HTTP + application password) setup
+- [ ] Optional write abilities (status/priority/category, save AI notes, create
+      ticket) behind `JALASUPPORT_MCP_WRITE=false`; ticket deletion is never exposed
+
 ## Out of scope for the MVP
 
 Multi-tenancy, customer organizations, real-time chat, advanced notifications,
