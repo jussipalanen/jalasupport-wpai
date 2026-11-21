@@ -123,3 +123,13 @@ if (! class_exists('WP_REST_Response')) {
         }
     }
 }
+
+if (! class_exists('WP_REST_Server')) {
+    class WP_REST_Server
+    {
+        public const READABLE = 'GET';
+        public const CREATABLE = 'POST';
+        public const EDITABLE = 'POST, PUT, PATCH';
+        public const DELETABLE = 'DELETE';
+    }
+}

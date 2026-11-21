@@ -143,3 +143,23 @@ describe('handlers', function () {
             ->and($response->headers['X-WP-TotalPages'])->toBe('3');
     });
 });
+
+describe('collection arguments', function () {
+    it('allows up to 100 tickets per page and defaults to 25', function () {
+        $routes = [];
+        Functions\when('register_rest_route')->alias(function (string $namespace, string $route, array $args) use (&$routes) {
+            $routes[$route] = $args;
+
+            return true;
+        });
+
+        $this->controller->registerRoutes();
+
+        $perPage = $routes['/tickets'][0]['args']['per_page'];
+
+        expect($perPage['minimum'])->toBe(1)
+            ->and($perPage['maximum'])->toBe(100)
+            ->and($perPage['default'])->toBe(25)
+            ->and(TicketRepository::MAX_PER_PAGE)->toBe(100);
+    });
+});

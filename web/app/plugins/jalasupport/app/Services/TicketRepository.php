@@ -22,7 +22,9 @@ use WP_Query;
  */
 class TicketRepository
 {
-    public const MAX_PER_PAGE = 50;
+    public const MAX_PER_PAGE = 100;
+
+    public const DEFAULT_PER_PAGE = 25;
 
     public const SORTABLE = ['created_at' => 'date', 'updated_at' => 'modified', 'title' => 'title'];
 
@@ -105,7 +107,7 @@ class TicketRepository
      */
     public function paginate(array $filters): array
     {
-        $perPage = max(1, min(self::MAX_PER_PAGE, (int) ($filters['per_page'] ?? 20)));
+        $perPage = max(1, min(self::MAX_PER_PAGE, (int) ($filters['per_page'] ?? self::DEFAULT_PER_PAGE)));
         $page = max(1, (int) ($filters['page'] ?? 1));
 
         $metaQuery = [];
@@ -136,11 +138,23 @@ class TicketRepository
         }
 
         $query = new WP_Query($args);
+        $total = (int) $query->found_posts;
+
+        // WP_Query only counts matches when the requested page has results.
+        // For a page past the end, count separately so clients can recover.
+        if ($query->posts === [] && $page > 1) {
+            $total = (int) (new WP_Query([
+                'posts_per_page' => 1,
+                'paged' => 1,
+                'fields' => 'ids',
+                'update_post_meta_cache' => false,
+            ] + $args))->found_posts;
+        }
 
         return [
             'items' => array_values(array_map(fn(WP_Post $post): Ticket => $this->hydrate($post), $query->posts)),
-            'total' => (int) $query->found_posts,
-            'pages' => (int) $query->max_num_pages,
+            'total' => $total,
+            'pages' => (int) ceil($total / $perPage),
             'page' => $page,
             'per_page' => $perPage,
         ];
