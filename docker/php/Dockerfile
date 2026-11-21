@@ -12,6 +12,8 @@ ARG PHP_VERSION=8.5
 ARG COMPOSER_VERSION=2.11.2
 # WP-CLI release (https://github.com/wp-cli/wp-cli/releases).
 ARG WP_CLI_VERSION=2.12.0
+# Node.js major version used to build the theme assets (production image).
+ARG NODE_VERSION=22
 
 FROM composer:${COMPOSER_VERSION} AS composer
 
@@ -20,24 +22,37 @@ FROM composer:${COMPOSER_VERSION} AS composer
 # -----------------------------------------------------------------------------
 FROM php:${PHP_VERSION}-apache AS base
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
+# Build the PHP extensions, then keep only the runtime libraries they link
+# against and remove the -dev packages (pattern from the official PHP images).
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends unzip less default-mysql-client; \
+    savedAptMark="$(apt-mark showmanual)"; \
+    apt-get install -y --no-install-recommends \
         libfreetype6-dev \
         libicu-dev \
         libjpeg62-turbo-dev \
         libpng-dev \
         libwebp-dev \
-        libzip-dev \
-        unzip \
-        less \
-        default-mysql-client \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
+        libzip-dev; \
+    docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp; \
+    extensions="exif gd intl mysqli pdo_mysql zip"; \
     # OPcache is built into PHP 8.5+; only older versions need the extension.
-    && extensions="exif gd intl mysqli pdo_mysql zip" \
-    && if ! php -m | grep -qi '^Zend OPcache$'; then extensions="$extensions opcache"; fi \
-    && docker-php-ext-install -j"$(nproc)" $extensions \
-    && a2enmod rewrite headers expires \
-    && rm -rf /var/lib/apt/lists/*
+    if ! php -m | grep -qi '^Zend OPcache$'; then extensions="$extensions opcache"; fi; \
+    docker-php-ext-install -j"$(nproc)" $extensions; \
+    apt-mark auto '.*' > /dev/null; \
+    apt-mark manual $savedAptMark > /dev/null; \
+    find /usr/local -type f -name '*.so' -exec ldd '{}' ';' \
+        | awk '/=>/ { so = $(NF-1); if (index(so, "/usr/local/") == 1) { next }; gsub("^/(usr/)?", "", so); printf "*%s\n", so }' \
+        | sort -u \
+        | xargs -r dpkg-query --search \
+        | cut -d: -f1 \
+        | sort -u \
+        | xargs -r apt-mark manual; \
+    apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false; \
+    a2enmod rewrite headers expires; \
+    rm -rf /var/lib/apt/lists/*; \
+    php -m | grep -qiE '^(gd|intl|mysqli|zip|exif|pdo_mysql)$'
 
 COPY docker/php/conf.d/ /usr/local/etc/php/conf.d/
 COPY docker/apache/000-default.conf /etc/apache2/sites-available/000-default.conf
@@ -81,3 +96,55 @@ RUN chmod +x /usr/local/bin/jalasupport-entrypoint
 
 ENTRYPOINT ["jalasupport-entrypoint"]
 CMD ["apache2-foreground"]
+
+# -----------------------------------------------------------------------------
+# Production build: Composer dependencies without dev packages.
+# -----------------------------------------------------------------------------
+FROM base AS build
+
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-interaction --no-progress --prefer-dist --no-scripts --no-autoloader
+
+COPY . .
+RUN composer dump-autoload --no-dev --optimize --no-interaction \
+    # Bedrock uses web/app as the content directory; drop the bundled defaults.
+    && rm -rf web/wp/wp-content
+
+# -----------------------------------------------------------------------------
+# Production build: theme assets (Vite).
+# -----------------------------------------------------------------------------
+FROM node:${NODE_VERSION}-bookworm-slim AS assets
+
+WORKDIR /app/web/app/themes/jalasupport
+
+COPY web/app/themes/jalasupport/package.json web/app/themes/jalasupport/package-lock.json ./
+RUN npm ci --no-audit --no-fund
+
+COPY web/app/themes/jalasupport/ ./
+RUN npm run build
+
+# -----------------------------------------------------------------------------
+# Production image: code and dependencies baked in, no bind mounts.
+# Persistent data (uploads, Wordfence wflogs) must be mounted as volumes.
+# -----------------------------------------------------------------------------
+FROM base AS prod
+
+ENV WP_ENV=production
+
+COPY docker/php/conf.d-production/ /usr/local/etc/php/conf.d/
+
+COPY --from=build /var/www/html /var/www/html
+COPY --from=assets /app/web/app/themes/jalasupport/public/build /var/www/html/web/app/themes/jalasupport/public/build
+
+# Writable runtime directories, plus a static health check endpoint that does
+# not load WordPress or touch the database.
+RUN mkdir -p web/app/uploads web/app/wflogs web/app/cache \
+    && chown -R www-data:www-data web/app/uploads web/app/wflogs web/app/cache \
+    && printf 'ok\n' > web/healthz.txt
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+    CMD curl -fsS http://localhost/healthz.txt || exit 1
+
+EXPOSE 80
+CMD ["apache2-foreground"]
+

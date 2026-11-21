@@ -1,16 +1,39 @@
+# Build context for the Docker images. The development image bind-mounts the
+# source; the production image copies it, so keep generated, installed and
+# local-only files out.
+
+# VCS, CI and local configuration
 .git
 .github
 .env
 .env.*
 !.env.example
+scripts/azure/config.env
+scripts/azure/.state.env
+
+# Dependencies (installed inside the image)
+vendor
 node_modules
 **/node_modules
-vendor
 web/wp
+# Composer-installed plugins and mu-plugins; only the application plugin is copied
+web/app/plugins/*
+!web/app/plugins/jalasupport
+web/app/mu-plugins/*/
+
+# Build output (theme assets are built inside the image)
+web/app/themes/jalasupport/public/build
+
+# Runtime data
 web/app/uploads/*
 web/app/cache
 web/app/wflogs
 web/wordfence-waf.php
 web/.user.ini
-*.log
+web/app/debug.log
+
+# Development and test files
+tests
 .phpunit.cache
+.phpstan-cache
+*.log
