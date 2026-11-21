@@ -13,8 +13,13 @@ class TicketShow extends Composer
         'app.tickets.show',
     ];
 
-    public function ticketId(): int
+    /**
+     * @return array<string, mixed>
+     */
+    protected function with(): array
     {
-        return absint(get_query_var('jalasupport_ticket'));
+        return [
+            'ticketId' => absint(get_query_var('jalasupport_ticket')),
+        ];
     }
 }
