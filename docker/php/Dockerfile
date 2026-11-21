@@ -1,9 +1,24 @@
 # syntax=docker/dockerfile:1
 
 # -----------------------------------------------------------------------------
+# Versions. Override with --build-arg or the matching variables in .env
+# (docker-compose.yml passes them through).
+# -----------------------------------------------------------------------------
+# PHP version for all stages: newest stable release with a mature ecosystem.
+# PHP 8.6 was tested and is not supported yet (WP-CLI deprecations, image
+# without mbstring). Keep in sync with the CI PHP matrix.
+ARG PHP_VERSION=8.5
+# Composer (official composer image tag).
+ARG COMPOSER_VERSION=2.11.2
+# WP-CLI release (https://github.com/wp-cli/wp-cli/releases).
+ARG WP_CLI_VERSION=2.12.0
+
+FROM composer:${COMPOSER_VERSION} AS composer
+
+# -----------------------------------------------------------------------------
 # Base image: PHP + Apache with the extensions WordPress needs.
 # -----------------------------------------------------------------------------
-FROM php:8.3-apache AS base
+FROM php:${PHP_VERSION}-apache AS base
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -17,16 +32,24 @@ RUN apt-get update \
         less \
         default-mysql-client \
     && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
-    && docker-php-ext-install -j"$(nproc)" exif gd intl mysqli opcache pdo_mysql zip \
+    # OPcache is built into PHP 8.5+; only older versions need the extension.
+    && extensions="exif gd intl mysqli pdo_mysql zip" \
+    && if ! php -m | grep -qi '^Zend OPcache$'; then extensions="$extensions opcache"; fi \
+    && docker-php-ext-install -j"$(nproc)" $extensions \
     && a2enmod rewrite headers expires \
     && rm -rf /var/lib/apt/lists/*
 
 COPY docker/php/conf.d/ /usr/local/etc/php/conf.d/
 COPY docker/apache/000-default.conf /etc/apache2/sites-available/000-default.conf
 
-# Composer and WP-CLI
-COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
-RUN curl -fsSL -o /usr/local/bin/wp https://github.com/wp-cli/wp-cli/releases/download/v2.12.0/wp-cli-2.12.0.phar \
+# Composer
+COPY --from=composer /usr/bin/composer /usr/local/bin/composer
+
+# WP-CLI, verified against the published SHA-512 checksum.
+ARG WP_CLI_VERSION
+RUN base="https://github.com/wp-cli/wp-cli/releases/download/v${WP_CLI_VERSION}/wp-cli-${WP_CLI_VERSION}.phar" \
+    && curl -fsSL -o /usr/local/bin/wp "${base}" \
+    && echo "$(curl -fsSL "${base}.sha512")  /usr/local/bin/wp" | sha512sum -c - \
     && chmod +x /usr/local/bin/wp
 
 WORKDIR /var/www/html
