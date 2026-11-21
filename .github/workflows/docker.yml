@@ -1,0 +1,68 @@
+name: Docker
+
+# Builds and smoke-tests the production image when files that affect it
+# change. Nothing is pushed or deployed.
+on:
+  pull_request:
+    paths:
+      - docker/**
+      - .dockerignore
+      - composer.json
+      - composer.lock
+      - config/**
+      - web/app/themes/jalasupport/**
+      - web/app/plugins/jalasupport/**
+      - .github/workflows/docker.yml
+  push:
+    branches: [main]
+    paths:
+      - docker/**
+      - .dockerignore
+      - composer.json
+      - composer.lock
+      - config/**
+      - web/app/themes/jalasupport/**
+      - web/app/plugins/jalasupport/**
+      - .github/workflows/docker.yml
+
+concurrency:
+  group: docker-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  production-image:
+    name: Production image (build, smoke test)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Build
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: docker/php/Dockerfile
+          target: prod
+          load: true
+          push: false
+          tags: jalasupport-app:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Smoke test
+        run: |
+          docker run -d --name app -p 8080:80 jalasupport-app:ci
+          for i in $(seq 1 30); do
+            curl -fsS http://localhost:8080/healthz.txt && break
+            sleep 2
+          done
+          curl -fsS http://localhost:8080/healthz.txt
+          docker exec app php -m | grep -qi '^mysqli$'
+          docker exec app php -r 'exit(ini_get("opcache.validate_timestamps") === "0" ? 0 : 1);'
+          docker exec app test -f web/app/themes/jalasupport/public/build/manifest.json
+          docker exec app sh -c '! ls vendor | grep -qiE "^(pestphp|phpstan|brain)$"'

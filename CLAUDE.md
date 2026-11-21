@@ -58,9 +58,10 @@ React may be introduced for specific complex interactive components when there i
 
 - Docker
 - Docker Compose
-- Azure App Service
-- Azure Database for MySQL
+- Azure Container Apps (free tier, scale to zero); Azure App Service as the always-on alternative
+- Azure Database for MySQL Flexible Server
 - Azure Container Registry
+- Azure Files (persistent uploads and Wordfence data)
 - GitHub Actions
 - Application Insights where appropriate
 
@@ -371,13 +372,14 @@ Never commit `.env` files containing actual credentials.
 
 ## 10. Azure Deployment
 
-The application should be deployable to Azure App Service using a Docker image.
+The application should be deployable to Azure using a Docker image, staying within the Azure free tier where practical.
 
 Target architecture:
 
-- Azure App Service for the application.
-- Azure Database for MySQL for persistent database storage.
+- Azure Container Apps (consumption, scale to zero) for the application; Azure App Service when always-on hosting is needed.
+- Azure Database for MySQL Flexible Server (Burstable B1ms) for persistent database storage.
 - Azure Container Registry for Docker images.
+- Azure Files for persistent uploads and Wordfence data.
 - Azure OpenAI for AI features.
 - GitHub Actions for CI/CD.
 

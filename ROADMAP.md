@@ -32,10 +32,13 @@ reviewable increments.
 
 ## Phase 5 — Deployment
 
-- [ ] Production Docker image
+- [x] Production Docker image (no dev dependencies, assets built in, CI smoke test)
 - [x] GitHub Actions CI (lint, tests, build)
-- [ ] Azure App Service + Azure Database for MySQL + Azure Container Registry
-- [ ] Deployment documentation
+- [x] Azure free-tier scripts: Container Apps + MySQL Flexible Server B1ms + Container Registry + Azure Files, budget alert, teardown
+- [x] Deployment documentation (`docs/DEPLOYMENT.md`)
+- [ ] First deployment to Azure (run `scripts/azure/setup.sh`)
+- [ ] Dedicated least-privilege database user for the app
+- [ ] Optional: GitHub Actions deploy with OIDC
 - [ ] Wordfence in production: Extended Protection firewall (`auto_prepend_file`) and persistent `wflogs` storage
 
 ## Phase 6 — MCP integration (post-MVP)

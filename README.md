@@ -69,7 +69,7 @@ rather than a traditional website:
 | 🤖 | Azure OpenAI ticket analysis API (category, priority, summary, suggested reply) | ✅ |
 | 🖥️ | SaaS-style UI (Blade + Tailwind + Alpine.js): dashboard, ticket list, ticket details, create ticket, settings | ✅ |
 | ✨ | AI panel with accept / edit / reject for every suggestion | ✅ |
-| ☁️ | Azure App Service deployment | 📅 |
+| ☁️ | Azure free-tier deployment (Container Apps + MySQL Flexible Server), scripted | ✅ ready to run |
 
 ✅ done · 🚧 in progress · 📅 planned
 
@@ -93,7 +93,7 @@ rather than a traditional website:
 | Security | Wordfence (free), dedicated capabilities, REST permission checks |
 | Frontend | Roots Sage 11, Blade templates and components, Tailwind CSS 4, Alpine.js 3, Vite 8 |
 | AI | Azure OpenAI (server-side PHP, structured JSON output) |
-| Infrastructure | Docker, Docker Compose, Azure App Service, Azure Database for MySQL, Azure Container Registry |
+| Infrastructure | Docker, Docker Compose, Azure Container Apps (free tier; App Service as the always-on option), Azure Database for MySQL Flexible Server, Azure Container Registry, Azure Files |
 | Quality | Pest 4, Brain Monkey, Laravel Pint, PHPStan, ESLint, editorconfig-checker, GitHub Actions |
 
 </details>
@@ -144,7 +144,8 @@ Key decisions:
 ├── .github/                 CI workflow, PR template, CODEOWNERS
 ├── config/                  Bedrock configuration (application.php + environments/)
 ├── docker/                  PHP/Apache image, PHP ini, entrypoint
-├── docs/                    Additional documentation (API reference)
+├── docs/                    Additional documentation (API reference, Azure deployment)
+├── scripts/azure/           Azure free-tier setup, deploy and teardown scripts
 ├── dev                      Developer helper script (Docker Compose wrapper)
 ├── tests/                   Pest unit tests, Brain Monkey setup, WP stubs
 ├── web/                     Web root
@@ -239,6 +240,7 @@ Run `./dev help` for the full list.
 | `./dev npm <args>` | npm in the theme directory (host) |
 | `./dev assets` | `npm install` (root tooling and theme) + theme `npm run build` |
 | `./dev vite` | Vite dev server for the theme |
+| `./dev prod [up\|down\|logs]` | Build and run the **production image** on <http://localhost:8090> against the local database |
 
 **Database and WP-CLI examples**
 
@@ -443,6 +445,38 @@ with ticket capabilities.
 </details>
 
 <details>
+<summary><b>☁️ Azure deployment (free tier)</b></summary>
+
+<br>
+
+The production image (`docker/php/Dockerfile`, target `prod`) bakes in Composer
+packages without dev dependencies and the built theme assets, with OPcache set
+to never re-check files. Uploads and Wordfence data are mounted from Azure Files.
+
+| Resource | Free tier |
+|---|---|
+| Azure Container Apps (scale 0-1, 0.5 vCPU / 1 GiB) | Always free (monthly grant) |
+| Azure Database for MySQL Flexible Server B1ms | 12 months free |
+| Azure Container Registry Standard | 12 months free |
+| Azure Files (uploads, wflogs) | A few cents per month |
+
+```bash
+cp scripts/azure/config.example.env scripts/azure/config.env   # set BUDGET_EMAIL
+az login
+DRY_RUN=1 scripts/azure/setup.sh    # preview, changes nothing
+scripts/azure/setup.sh              # create the deployment
+scripts/azure/deploy.sh             # ship code changes later
+scripts/azure/teardown.sh           # delete everything (BACKUP=1 to export first)
+```
+
+Scaling to zero means a few-second cold start after idle periods. A budget
+alert notifies you of costs but doesn't stop them.
+
+📄 Full guide (costs, first-time setup, security, troubleshooting): [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
+
+</details>
+
+<details>
 <summary><b>🔒 Security</b></summary>
 
 <br>
@@ -559,7 +593,7 @@ Branch naming: `feature/…`, `fix/…`, `chore/…`.
 2. **Ticket management:** CPT, ACF fields, REST API, tests ✅
 3. **AI assistance:** Azure OpenAI service, analyze and suggest-reply endpoints ✅
 4. **Application UI:** dashboard, ticket list, details, create, settings ✅
-5. **Deployment:** production image, Azure App Service, documentation 📅
+5. **Deployment:** production image, Azure free-tier scripts and documentation ✅ (first deployment: run when ready)
 6. **MCP integration (post-MVP):** WordPress MCP Adapter with read-only ticket abilities, resources and prompts 📅
 
 See [ROADMAP.md](ROADMAP.md) for the detailed checklist.

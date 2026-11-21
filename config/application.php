@@ -152,6 +152,11 @@ Config::define('AZURE_OPENAI_USE_MANAGED_IDENTITY', (bool) env('AZURE_OPENAI_USE
 Config::define('AZURE_OPENAI_TIMEOUT', (int) (env('AZURE_OPENAI_TIMEOUT') ?: 30));
 
 /**
+ * Theme used by new installations (the default Twenty* themes are not installed).
+ */
+Config::define('WP_DEFAULT_THEME', 'jalasupport');
+
+/**
  * Custom Settings
  */
 Config::define('AUTOMATIC_UPDATER_DISABLED', true);
