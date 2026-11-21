@@ -57,6 +57,11 @@ Project
     npm <args>        Run npm in the theme directory (on the host)
     assets            Install npm dependencies (root tooling + theme) and build assets
     vite              Start the Vite dev server for the theme
+
+Production image (local test)
+    prod [up]         Build and run the production image on http://localhost:8090 (local DB, TLS)
+    prod down         Stop and remove the production test container
+    prod logs         Follow the production test container logs
 EOF
 }
 
@@ -154,6 +159,38 @@ case "$command" in
         ;;
     vite)
         (cd "$THEME_DIR" && npm run dev)
+        ;;
+    prod)
+        ensure_env
+        prod_name="jalasupport-prod"
+        prod_port="${PROD_PORT:-8090}"
+        case "${1:-up}" in
+            up)
+                docker build --target prod -t jalasupport-app:prod -f docker/php/Dockerfile .
+                "${COMPOSE[@]}" up -d db
+                network="$("${COMPOSE[@]}" ps -q db | xargs docker inspect -f '{{range $k, $v := .NetworkSettings.Networks}}{{$k}}{{end}}')"
+                docker rm -f "$prod_name" > /dev/null 2>&1 || true
+                # Same database and salts as local development, production settings.
+                docker run -d --name "$prod_name" --network "$network" \
+                    -p "127.0.0.1:${prod_port}:80" \
+                    --env-file .env \
+                    -e DB_HOST=db -e DB_SSL=true -e WP_ENV=production \
+                    -e WP_HOME="http://localhost:${prod_port}" \
+                    -e WP_SITEURL="http://localhost:${prod_port}/wp" \
+                    jalasupport-app:prod > /dev/null
+                echo "Production image running: http://localhost:${prod_port} (stop with ./dev prod down)"
+                ;;
+            down)
+                docker rm -f "$prod_name"
+                ;;
+            logs)
+                docker logs -f "$prod_name"
+                ;;
+            *)
+                echo "Usage: ./dev prod [up|down|logs]" >&2
+                exit 1
+                ;;
+        esac
         ;;
     help | -h | --help)
         usage
