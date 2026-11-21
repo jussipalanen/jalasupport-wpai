@@ -3,9 +3,9 @@
 @php
     $classes = [
         'primary' => 'bg-indigo-600 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline-indigo-600',
-        'secondary' => 'bg-white text-slate-700 ring-1 ring-inset ring-slate-300 shadow-sm hover:bg-slate-50 focus-visible:outline-slate-400',
-        'ghost' => 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-slate-400',
-        'danger' => 'bg-white text-red-600 ring-1 ring-inset ring-red-200 hover:bg-red-50 focus-visible:outline-red-500',
+        'secondary' => 'bg-white/5 text-slate-200 ring-1 ring-inset ring-white/15 shadow-sm hover:bg-white/10 focus-visible:outline-slate-400',
+        'ghost' => 'text-slate-300 hover:bg-white/10 hover:text-white focus-visible:outline-slate-400',
+        'danger' => 'bg-red-500/10 text-red-300 ring-1 ring-inset ring-red-500/30 hover:bg-red-500/20 focus-visible:outline-red-500',
         'ai' => 'bg-violet-600 text-white shadow-sm hover:bg-violet-500 focus-visible:outline-violet-600',
     ][$variant] ?? '';
 

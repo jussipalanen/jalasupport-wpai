@@ -10,17 +10,17 @@
             @else
                 <div class="mb-5 flex items-center gap-3">
                     @if ($ai['configured'])
-                        <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200 ring-inset">
+                        <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-300 ring-1 ring-emerald-500/30 ring-inset">
                             <span class="size-1.5 rounded-full bg-emerald-500"></span>{{ __('Configured', 'jalasupport') }}
                         </span>
                     @else
-                        <span class="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 ring-1 ring-slate-200 ring-inset">
+                        <span class="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-2.5 py-1 text-xs font-medium text-slate-300 ring-1 ring-white/10 ring-inset">
                             <span class="size-1.5 rounded-full bg-slate-400"></span>{{ __('Not configured', 'jalasupport') }}
                         </span>
                     @endif
                 </div>
 
-                <dl class="divide-y divide-slate-100 text-sm">
+                <dl class="divide-y divide-white/5 text-sm">
                     @foreach ([
                         __('Endpoint', 'jalasupport') => $ai['endpoint'] ?: '—',
                         __('Deployment', 'jalasupport') => $ai['deployment'] ?: '—',
@@ -28,8 +28,8 @@
                         __('Authentication', 'jalasupport') => $ai['auth'],
                     ] as $label => $value)
                         <div class="flex flex-col gap-1 py-3 sm:flex-row sm:justify-between">
-                            <dt class="text-slate-500">{{ $label }}</dt>
-                            <dd class="font-mono text-slate-800">{{ $value }}</dd>
+                            <dt class="text-slate-400">{{ $label }}</dt>
+                            <dd class="font-mono text-slate-100">{{ $value }}</dd>
                         </div>
                     @endforeach
                 </dl>
@@ -40,7 +40,7 @@
                     </x-notice>
                 @endunless
 
-                <p class="mt-5 flex items-center gap-2 text-xs text-slate-500">
+                <p class="mt-5 flex items-center gap-2 text-xs text-slate-400">
                     <x-icon name="lock" class="size-4" />
                     {{ __('Credentials are kept on the server and are never shown or sent to the browser.', 'jalasupport') }}
                 </p>
@@ -51,8 +51,8 @@
             <dl class="space-y-3 text-sm">
                 @foreach ($environment as $label => $value)
                     <div>
-                        <dt class="text-slate-500">{{ $label }}</dt>
-                        <dd class="break-all text-slate-800">{{ $value }}</dd>
+                        <dt class="text-slate-400">{{ $label }}</dt>
+                        <dd class="break-all text-slate-100">{{ $value }}</dd>
                     </div>
                 @endforeach
             </dl>

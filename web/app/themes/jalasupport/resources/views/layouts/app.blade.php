@@ -1,5 +1,5 @@
 <!doctype html>
-<html @php(language_attributes()) class="h-full bg-slate-50">
+<html @php(language_attributes()) class="h-full bg-slate-950">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,10 +9,10 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
 
-    <body @php(body_class('h-full text-slate-800 antialiased'))>
+    <body @php(body_class('h-full text-slate-100 antialiased'))>
         @php(wp_body_open())
 
-        <a class="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:m-2 focus:rounded-md focus:bg-white focus:px-3 focus:py-2 focus:shadow" href="#main">
+        <a class="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:m-2 focus:rounded-md focus:bg-slate-900 focus:px-3 focus:py-2 focus:shadow" href="#main">
             {{ __('Skip to content', 'jalasupport') }}
         </a>
 
@@ -21,7 +21,9 @@
         <div x-data="{ sidebarOpen: false }" class="min-h-full">
             @include('sections.sidebar')
 
-            <div class="lg:pl-64">
+            <div class="relative isolate lg:pl-64">
+                @include('partials.backdrop', ['variant' => 'banner'])
+
                 @include('sections.topbar')
 
                 <main id="main" class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">

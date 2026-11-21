@@ -37,15 +37,15 @@ export const helpers = {
 
 export const badgeClasses = {
     status: {
-        open: 'bg-sky-50 text-sky-700 ring-sky-200',
-        in_progress: 'bg-amber-50 text-amber-700 ring-amber-200',
-        resolved: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
-        closed: 'bg-slate-100 text-slate-600 ring-slate-200',
+        open: 'bg-sky-500/10 text-sky-300 ring-sky-500/30',
+        in_progress: 'bg-amber-500/10 text-amber-300 ring-amber-500/30',
+        resolved: 'bg-emerald-500/10 text-emerald-300 ring-emerald-500/30',
+        closed: 'bg-white/5 text-slate-300 ring-white/10',
     },
     priority: {
-        low: 'bg-slate-50 text-slate-600 ring-slate-200',
-        normal: 'bg-blue-50 text-blue-700 ring-blue-200',
-        high: 'bg-orange-50 text-orange-700 ring-orange-200',
-        urgent: 'bg-red-50 text-red-700 ring-red-200',
+        low: 'bg-white/5 text-slate-300 ring-white/10',
+        normal: 'bg-blue-500/10 text-blue-300 ring-blue-500/30',
+        high: 'bg-orange-500/10 text-orange-300 ring-orange-500/30',
+        urgent: 'bg-red-500/10 text-red-300 ring-red-500/30',
     },
 };

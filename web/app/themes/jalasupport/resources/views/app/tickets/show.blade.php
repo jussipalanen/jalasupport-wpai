@@ -4,8 +4,8 @@
     <div x-data="ticketDetail({{ (int) $ticketId }})">
         <template x-if="loading">
             <div class="space-y-4" aria-hidden="true">
-                <div class="h-8 w-1/3 animate-pulse rounded bg-slate-200"></div>
-                <div class="h-64 animate-pulse rounded-xl bg-slate-100"></div>
+                <div class="h-8 w-1/3 animate-pulse rounded bg-white/10"></div>
+                <div class="h-64 animate-pulse rounded-xl bg-white/5"></div>
             </div>
         </template>
 
@@ -13,8 +13,8 @@
             <x-card>
                 <div class="py-10 text-center">
                     <x-icon name="inbox" class="mx-auto size-10 text-slate-300" />
-                    <p class="mt-3 font-medium text-slate-900">{{ __('Ticket not found', 'jalasupport') }}</p>
-                    <a href="{{ home_url('/tickets/') }}" class="mt-2 inline-block text-sm font-medium text-indigo-600 hover:text-indigo-500">{{ __('Back to tickets', 'jalasupport') }}</a>
+                    <p class="mt-3 font-medium text-white">{{ __('Ticket not found', 'jalasupport') }}</p>
+                    <a href="{{ home_url('/tickets/') }}" class="mt-2 inline-block text-sm font-medium text-indigo-400 hover:text-indigo-300">{{ __('Back to tickets', 'jalasupport') }}</a>
                 </div>
             </x-card>
         </template>
@@ -27,15 +27,15 @@
             <div>
                 <x-page-header title="">
                     <x-slot:breadcrumb>
-                        <a href="{{ home_url('/tickets/') }}" class="mb-2 inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700">
+                        <a href="{{ home_url('/tickets/') }}" class="mb-2 inline-flex items-center gap-1 text-sm text-slate-300 hover:text-white">
                             <x-icon name="chevron-left" class="size-4" /> {{ __('Tickets', 'jalasupport') }}
                         </a>
                         <div class="flex flex-wrap items-center gap-2">
-                            <span class="text-sm text-slate-400" x-text="'#' + ticket.id"></span>
+                            <span class="text-sm text-slate-300" x-text="'#' + ticket.id"></span>
                             <x-badge kind="status" value="ticket.status" label="ticket.status_label" />
                             <x-badge kind="priority" value="ticket.priority" label="ticket.priority_label" />
                         </div>
-                        <h1 class="mt-2 text-2xl font-semibold tracking-tight text-slate-900" x-text="ticket.title"></h1>
+                        <h1 class="mt-2 text-2xl font-semibold tracking-tight text-white" x-text="ticket.title"></h1>
                     </x-slot:breadcrumb>
                     <x-slot:actions>
                         <x-button variant="secondary" icon="pencil" @click="startEdit()" x-show="!editing">{{ __('Edit', 'jalasupport') }}</x-button>
@@ -49,7 +49,7 @@
                     <div class="space-y-6 lg:col-span-2">
                         {{-- Ticket content (user-provided) --}}
                         <x-card :title="__('Customer request', 'jalasupport')">
-                            <div x-show="!editing" class="text-sm leading-relaxed whitespace-pre-line text-slate-700" x-text="ticket.description"></div>
+                            <div x-show="!editing" class="text-sm leading-relaxed whitespace-pre-line text-slate-200" x-text="ticket.description"></div>
 
                             <form x-show="editing" x-cloak @submit.prevent="saveEdit()" class="space-y-5" novalidate>
                                 <x-field :label="__('Subject', 'jalasupport')" for="edit-title" error="errors.title">
@@ -94,12 +94,12 @@
 
                         <x-card :title="__('Customer', 'jalasupport')">
                             <div class="flex items-center gap-3">
-                                <span class="flex size-10 items-center justify-center rounded-full bg-slate-100 text-slate-500">
+                                <span class="flex size-10 items-center justify-center rounded-full bg-white/5 text-slate-400">
                                     <x-icon name="user" class="size-5" />
                                 </span>
                                 <div class="min-w-0">
-                                    <p class="truncate text-sm font-medium text-slate-900" x-text="ticket.customer.name"></p>
-                                    <a class="truncate text-sm text-indigo-600 hover:text-indigo-500" :href="'mailto:' + ticket.customer.email" x-text="ticket.customer.email"></a>
+                                    <p class="truncate text-sm font-medium text-white" x-text="ticket.customer.name"></p>
+                                    <a class="truncate text-sm text-indigo-400 hover:text-indigo-300" :href="'mailto:' + ticket.customer.email" x-text="ticket.customer.email"></a>
                                 </div>
                             </div>
                         </x-card>
@@ -107,12 +107,12 @@
                         <x-card :title="__('Details', 'jalasupport')">
                             <dl class="space-y-3 text-sm">
                                 <div class="flex justify-between gap-4">
-                                    <dt class="text-slate-500">{{ __('Created', 'jalasupport') }}</dt>
-                                    <dd class="text-slate-700" x-text="formatDate(ticket.created_at)"></dd>
+                                    <dt class="text-slate-400">{{ __('Created', 'jalasupport') }}</dt>
+                                    <dd class="text-slate-200" x-text="formatDate(ticket.created_at)"></dd>
                                 </div>
                                 <div class="flex justify-between gap-4">
-                                    <dt class="text-slate-500">{{ __('Last updated', 'jalasupport') }}</dt>
-                                    <dd class="text-slate-700" x-text="formatDate(ticket.updated_at)"></dd>
+                                    <dt class="text-slate-400">{{ __('Last updated', 'jalasupport') }}</dt>
+                                    <dd class="text-slate-200" x-text="formatDate(ticket.updated_at)"></dd>
                                 </div>
                             </dl>
                         </x-card>

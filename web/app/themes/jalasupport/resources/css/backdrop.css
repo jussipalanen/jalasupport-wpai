@@ -1,0 +1,103 @@
+/*
+ * Space backdrop shared by the application and the login screen.
+ * Plain CSS (no Tailwind utilities) so it can be bundled into both entries.
+ */
+
+.backdrop {
+    overflow: hidden;
+    pointer-events: none;
+    background-color: #0c0a23;
+}
+
+/* Dark overlay: keeps the scene subtle and text on top readable. */
+.backdrop::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(5, 6, 15, 0.55) 0%, rgba(5, 6, 15, 0.3) 55%, rgba(5, 6, 15, 0.4) 100%);
+}
+
+/* Full-screen background (login screen). */
+.backdrop--full {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+}
+
+/*
+ * Header band behind the page title (application). The parent must be
+ * positioned and create a stacking context (e.g. "relative isolate").
+ * The band starts below the 4rem top bar and fades into the workspace.
+ */
+.backdrop--banner {
+    position: absolute;
+    top: 4rem;
+    right: 0;
+    left: 0;
+    z-index: -1;
+    height: 13rem;
+    -webkit-mask-image: linear-gradient(to bottom, #000 60%, transparent);
+    mask-image: linear-gradient(to bottom, #000 60%, transparent);
+}
+
+.backdrop__svg {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.backdrop__star {
+    animation: backdrop-twinkle 4s ease-in-out infinite alternate;
+}
+
+.backdrop__star:nth-of-type(3n) {
+    animation-duration: 6s;
+    animation-delay: -2s;
+}
+
+.backdrop__nebula {
+    animation: backdrop-pulse 18s ease-in-out infinite alternate;
+}
+
+.backdrop__sun {
+    animation: backdrop-sun 10s ease-in-out infinite alternate;
+}
+
+@keyframes backdrop-twinkle {
+    from {
+        opacity: 0.15;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes backdrop-pulse {
+    from {
+        opacity: 0.8;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes backdrop-sun {
+    from {
+        opacity: 0.6;
+    }
+
+    to {
+        opacity: 0.8;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .backdrop__star,
+    .backdrop__nebula,
+    .backdrop__sun {
+        animation: none;
+    }
+}

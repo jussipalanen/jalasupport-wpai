@@ -4,7 +4,7 @@
     <div x-data="ticketForm">
         <x-page-header :title="__('New ticket', 'jalasupport')" :description="__('Log a customer request.', 'jalasupport')">
             <x-slot:breadcrumb>
-                <a href="{{ home_url('/tickets/') }}" class="mb-2 inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700">
+                <a href="{{ home_url('/tickets/') }}" class="mb-2 inline-flex items-center gap-1 text-sm text-slate-300 hover:text-white">
                     <x-icon name="chevron-left" class="size-4" /> {{ __('Tickets', 'jalasupport') }}
                 </a>
             </x-slot:breadcrumb>

@@ -9,7 +9,7 @@
         </x-page-header>
 
         {{-- Filters --}}
-        <form class="mb-4 grid grid-cols-1 gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-2 xl:grid-cols-6" @submit.prevent="apply()" role="search">
+        <form class="mb-4 grid grid-cols-1 gap-3 rounded-xl border border-white/10 bg-slate-900 p-4 shadow-sm md:grid-cols-2 xl:grid-cols-6" @submit.prevent="apply()" role="search">
             <div class="relative md:col-span-2">
                 <label for="ticket-search" class="sr-only">{{ __('Search tickets', 'jalasupport') }}</label>
                 <x-icon name="search" class="pointer-events-none absolute top-2.5 left-3 size-4 text-slate-400" />
@@ -41,12 +41,12 @@
             </div>
         </form>
 
-        <div class="mb-3 flex items-center justify-between text-sm text-slate-500">
+        <div class="mb-3 flex items-center justify-between text-sm text-slate-400">
             <p aria-live="polite">
                 <span x-show="!loading" x-text="summary()"></span>
                 <span x-show="loading">{{ __('Loading…', 'jalasupport') }}</span>
             </p>
-            <button type="button" class="text-sm font-medium text-indigo-600 hover:text-indigo-500" x-show="hasFilters()" @click="reset()" x-cloak>
+            <button type="button" class="text-sm font-medium text-indigo-400 hover:text-indigo-300" x-show="hasFilters()" @click="reset()" x-cloak>
                 {{ __('Clear filters', 'jalasupport') }}
             </button>
         </div>
@@ -56,9 +56,9 @@
         </template>
 
         {{-- Table (md and up) / cards (mobile) --}}
-        <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-            <table class="hidden min-w-full divide-y divide-slate-200 md:table">
-                <thead class="bg-slate-50 text-left text-xs font-medium tracking-wide text-slate-500 uppercase">
+        <div class="overflow-hidden rounded-xl border border-white/10 bg-slate-900 shadow-sm">
+            <table class="hidden min-w-full divide-y divide-white/10 md:table">
+                <thead class="bg-white/5 text-left text-xs font-medium tracking-wide text-slate-400 uppercase">
                     <tr>
                         <th scope="col" class="px-5 py-3">{{ __('Ticket', 'jalasupport') }}</th>
                         <th scope="col" class="px-5 py-3">{{ __('Customer', 'jalasupport') }}</th>
@@ -68,35 +68,35 @@
                         <th scope="col" class="px-5 py-3 text-right">{{ __('Updated', 'jalasupport') }}</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100 text-sm" :class="{ 'opacity-60': loading }">
+                <tbody class="divide-y divide-white/5 text-sm" :class="{ 'opacity-60': loading }">
                     <template x-for="ticket in tickets" :key="ticket.id">
-                        <tr class="cursor-pointer hover:bg-slate-50" @click="open(ticket.id)">
+                        <tr class="cursor-pointer hover:bg-white/5" @click="open(ticket.id)">
                             <td class="max-w-xs px-5 py-3">
-                                <a :href="ticketUrl(ticket.id)" class="block truncate font-medium text-slate-900 hover:text-indigo-600" x-text="ticket.title" @click.stop></a>
+                                <a :href="ticketUrl(ticket.id)" class="block truncate font-medium text-white hover:text-indigo-300" x-text="ticket.title" @click.stop></a>
                                 <span class="text-xs text-slate-400" x-text="'#' + ticket.id"></span>
                             </td>
                             <td class="px-5 py-3">
-                                <p class="text-slate-700" x-text="ticket.customer.name"></p>
+                                <p class="text-slate-200" x-text="ticket.customer.name"></p>
                                 <p class="text-xs text-slate-400" x-text="ticket.customer.email"></p>
                             </td>
-                            <td class="px-5 py-3 text-slate-600" x-text="ticket.category_label"></td>
+                            <td class="px-5 py-3 text-slate-300" x-text="ticket.category_label"></td>
                             <td class="px-5 py-3"><x-badge kind="priority" value="ticket.priority" label="ticket.priority_label" /></td>
                             <td class="px-5 py-3"><x-badge kind="status" value="ticket.status" label="ticket.status_label" /></td>
-                            <td class="px-5 py-3 text-right text-xs whitespace-nowrap text-slate-500" x-text="relativeTime(ticket.updated_at)"></td>
+                            <td class="px-5 py-3 text-right text-xs whitespace-nowrap text-slate-400" x-text="relativeTime(ticket.updated_at)"></td>
                         </tr>
                     </template>
                 </tbody>
             </table>
 
-            <ul class="divide-y divide-slate-100 md:hidden">
+            <ul class="divide-y divide-white/5 md:hidden">
                 <template x-for="ticket in tickets" :key="ticket.id">
                     <li>
-                        <a :href="ticketUrl(ticket.id)" class="block space-y-2 px-4 py-4 hover:bg-slate-50">
+                        <a :href="ticketUrl(ticket.id)" class="block space-y-2 px-4 py-4 hover:bg-white/5">
                             <div class="flex items-start justify-between gap-3">
-                                <p class="font-medium text-slate-900" x-text="ticket.title"></p>
+                                <p class="font-medium text-white" x-text="ticket.title"></p>
                                 <x-badge kind="status" value="ticket.status" label="ticket.status_label" />
                             </div>
-                            <p class="text-xs text-slate-500">
+                            <p class="text-xs text-slate-400">
                                 <span x-text="'#' + ticket.id"></span> · <span x-text="ticket.customer.name"></span> · <span x-text="relativeTime(ticket.updated_at)"></span>
                             </p>
                             <x-badge kind="priority" value="ticket.priority" label="ticket.priority_label" />
@@ -108,8 +108,8 @@
             <template x-if="!loading && tickets.length === 0 && !error">
                 <div class="px-5 py-16 text-center">
                     <x-icon name="inbox" class="mx-auto size-10 text-slate-300" />
-                    <p class="mt-3 text-sm font-medium text-slate-900">{{ __('No tickets found', 'jalasupport') }}</p>
-                    <p class="mt-1 text-sm text-slate-500">{{ __('Try adjusting your search or filters.', 'jalasupport') }}</p>
+                    <p class="mt-3 text-sm font-medium text-white">{{ __('No tickets found', 'jalasupport') }}</p>
+                    <p class="mt-1 text-sm text-slate-400">{{ __('Try adjusting your search or filters.', 'jalasupport') }}</p>
                 </div>
             </template>
         </div>
@@ -117,7 +117,7 @@
         {{-- Pagination --}}
         <nav class="mt-4 flex items-center justify-between" x-show="meta.pages > 1" x-cloak aria-label="{{ __('Pagination', 'jalasupport') }}">
             <x-button variant="secondary" icon="chevron-left" @click="go(meta.page - 1)" x-bind:disabled="meta.page <= 1 || loading">{{ __('Previous', 'jalasupport') }}</x-button>
-            <p class="text-sm text-slate-500" x-text="pageLabel()"></p>
+            <p class="text-sm text-slate-400" x-text="pageLabel()"></p>
             <x-button variant="secondary" @click="go(meta.page + 1)" x-bind:disabled="meta.page >= meta.pages || loading">
                 {{ __('Next', 'jalasupport') }} <x-icon name="chevron-right" class="size-4" />
             </x-button>
