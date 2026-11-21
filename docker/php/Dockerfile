@@ -14,6 +14,7 @@ RUN apt-get update \
         libwebp-dev \
         libzip-dev \
         unzip \
+        less \
         default-mysql-client \
     && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
     && docker-php-ext-install -j"$(nproc)" exif gd intl mysqli opcache pdo_mysql zip \
@@ -42,6 +43,15 @@ RUN groupmod -o -g "${GID}" www-data \
     && usermod -o -u "${UID}" -g "${GID}" www-data \
     && mkdir -p /var/www/.composer /var/www/.wp-cli \
     && chown -R www-data:www-data /var/www
+
+# The local MySQL container uses a self-signed certificate: wrap the MySQL /
+# MariaDB client tools used by WP-CLI (wp db query/export/import/check) so they keep
+# TLS but skip certificate verification.
+COPY docker/php/mysql-client-wrapper.sh /usr/local/bin/mysql-client-wrapper
+RUN chmod +x /usr/local/bin/mysql-client-wrapper \
+    && for tool in mariadb mysql mariadb-dump mysqldump mariadb-check mysqlcheck; do \
+        ln -s /usr/local/bin/mysql-client-wrapper "/usr/local/bin/${tool}"; \
+    done
 
 COPY docker/php/docker-entrypoint.sh /usr/local/bin/jalasupport-entrypoint
 RUN chmod +x /usr/local/bin/jalasupport-entrypoint
