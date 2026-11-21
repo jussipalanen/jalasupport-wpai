@@ -36,6 +36,7 @@ reviewable increments.
 - [x] GitHub Actions CI (lint, tests, build)
 - [ ] Azure App Service + Azure Database for MySQL + Azure Container Registry
 - [ ] Deployment documentation
+- [ ] Wordfence in production: Extended Protection firewall (`auto_prepend_file`) and persistent `wflogs` storage
 
 ## Phase 6 — MCP integration (post-MVP)
 
