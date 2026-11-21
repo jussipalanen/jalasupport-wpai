@@ -477,6 +477,13 @@ Out of scope for the initial prototype:
 
 Do not implement out-of-scope functionality unless explicitly requested.
 
+### Planned post-MVP extensions
+
+- MCP access through the official WordPress MCP Adapter (`wordpress/mcp-adapter`) and the core Abilities API, as described in ROADMAP.md (Phase 6).
+- Abilities must reuse the plugin's services (`TicketRepository`, `TicketValidator`) and capability checks; they must not duplicate business logic.
+- Start read-only. Write abilities must be opt-in (disabled by default), and ticket deletion, user management, settings and credentials must never be exposed.
+- MCP clients act on behalf of an authenticated WordPress user; this is not an autonomous agent and must never bypass application authorization.
+
 ## 14. Final Development Principle
 
 Build a small, functional, secure, and well-structured application.
