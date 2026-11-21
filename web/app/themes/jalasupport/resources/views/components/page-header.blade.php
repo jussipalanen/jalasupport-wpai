@@ -4,10 +4,10 @@
     <div>
         {{ $breadcrumb ?? '' }}
         @if ($title !== '')
-            <h1 class="text-2xl font-semibold tracking-tight text-slate-900">{{ $title }}</h1>
+            <h1 class="text-2xl font-semibold tracking-tight text-white">{{ $title }}</h1>
         @endif
         @if ($description)
-            <p class="mt-1 text-sm text-slate-500">{{ $description }}</p>
+            <p class="mt-1 text-sm text-slate-300">{{ $description }}</p>
         @endif
     </div>
 

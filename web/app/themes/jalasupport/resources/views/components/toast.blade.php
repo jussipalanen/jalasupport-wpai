@@ -10,7 +10,7 @@
         x-transition
         x-cloak
         class="pointer-events-auto flex max-w-sm items-center gap-3 rounded-lg px-4 py-3 text-sm shadow-lg ring-1"
-        :class="type === 'error' ? 'bg-red-50 text-red-800 ring-red-200' : 'bg-slate-900 text-white ring-slate-900'"
+        :class="type === 'error' ? 'bg-red-500/10 text-red-200 ring-red-500/30' : 'bg-slate-800 text-white ring-white/10'"
     >
         <span x-text="message"></span>
         <button type="button" class="opacity-70 hover:opacity-100" @click="visible = false">

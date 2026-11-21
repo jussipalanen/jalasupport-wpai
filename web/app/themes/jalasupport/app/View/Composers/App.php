@@ -23,7 +23,6 @@ class App extends Composer
     protected static $views = [
         'layouts.*',
         'sections.*',
-        'partials.*',
         'app.*',
         'index',
         '404',
