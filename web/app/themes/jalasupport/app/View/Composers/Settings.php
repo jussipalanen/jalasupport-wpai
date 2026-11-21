@@ -19,9 +19,20 @@ class Settings extends Composer
     ];
 
     /**
+     * @return array<string, mixed>
+     */
+    protected function with(): array
+    {
+        return [
+            'ai' => $this->ai(),
+            'environment' => $this->environment(),
+        ];
+    }
+
+    /**
      * @return array{configured: bool, endpoint: string, deployment: string, apiVersion: string, auth: string}|null
      */
-    public function ai(): ?array
+    protected function ai(): ?array
     {
         if (! class_exists(AzureOpenAIConfig::class)) {
             return null;
@@ -44,7 +55,7 @@ class Settings extends Composer
     /**
      * @return array<string, string>
      */
-    public function environment(): array
+    protected function environment(): array
     {
         return [
             __('Environment', 'jalasupport') => (string) (defined('WP_ENV') ? WP_ENV : wp_get_environment_type()),

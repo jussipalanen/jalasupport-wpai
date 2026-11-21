@@ -16,20 +16,41 @@ use function App\current_route;
 class App extends Composer
 {
     /**
+     * Views that render the application shell or pages (not small components).
+     *
      * @var array<int, string>
      */
     protected static $views = [
-        '*',
+        'layouts.*',
+        'sections.*',
+        'partials.*',
+        'app.*',
+        'index',
+        '404',
     ];
 
-    public function siteName(): string
+    /**
+     * Data passed to the views. Values are evaluated here so templates
+     * receive plain arrays and scalars.
+     *
+     * @return array<string, mixed>
+     */
+    protected function with(): array
     {
-        return get_bloginfo('name', 'display');
+        return [
+            'siteName' => $this->siteName(),
+            'route' => current_route(),
+            'navigation' => $this->navigation(),
+            'currentUser' => $this->currentUser(),
+            'ticketOptions' => $this->ticketOptions(),
+            'pluginActive' => $this->pluginActive(),
+            'clientConfig' => $this->clientConfig(),
+        ];
     }
 
-    public function route(): ?string
+    protected function siteName(): string
     {
-        return current_route();
+        return get_bloginfo('name', 'display');
     }
 
     /**
@@ -37,7 +58,7 @@ class App extends Composer
      *
      * @return array<int, array{label: string, url: string, icon: string, active: bool}>
      */
-    public function navigation(): array
+    protected function navigation(): array
     {
         $route = current_route();
 
@@ -57,7 +78,7 @@ class App extends Composer
     /**
      * @return array{name: string, email: string, avatar: string, logout: string, admin: ?string}|null
      */
-    public function currentUser(): ?array
+    protected function currentUser(): ?array
     {
         $user = wp_get_current_user();
 
@@ -79,7 +100,7 @@ class App extends Composer
      *
      * @return array{statuses: array<string, string>, priorities: array<string, string>, categories: array<string, string>}
      */
-    public function ticketOptions(): array
+    protected function ticketOptions(): array
     {
         if (! class_exists(TicketStatus::class)) {
             return ['statuses' => [], 'priorities' => [], 'categories' => []];
@@ -92,7 +113,7 @@ class App extends Composer
         ];
     }
 
-    public function pluginActive(): bool
+    protected function pluginActive(): bool
     {
         return class_exists(TicketStatus::class) && post_type_exists('ticket');
     }
@@ -103,7 +124,7 @@ class App extends Composer
      *
      * @return array<string, mixed>
      */
-    public function clientConfig(): array
+    protected function clientConfig(): array
     {
         return [
             'restUrl' => esc_url_raw(rest_url('jalasupport/v1/')),
