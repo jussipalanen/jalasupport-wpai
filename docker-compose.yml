@@ -39,5 +39,21 @@ services:
       retries: 20
     restart: unless-stopped
 
+  # Web GUI for MySQL (local development only). Signs in automatically as the
+  # application database user; reachable only from this machine (127.0.0.1).
+  phpmyadmin:
+    image: phpmyadmin:5.2
+    environment:
+      PMA_HOST: db
+      PMA_USER: ${DB_USER}
+      PMA_PASSWORD: ${DB_PASSWORD}
+      UPLOAD_LIMIT: 64M
+    ports:
+      - "127.0.0.1:${PMA_PORT:-8081}:80"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   db-data:
