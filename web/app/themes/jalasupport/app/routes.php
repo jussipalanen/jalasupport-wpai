@@ -54,6 +54,13 @@ add_action('init', function () {
     add_rewrite_rule('^tickets/([0-9]+)/?$', 'index.php?jalasupport_view=ticket&jalasupport_ticket=$matches[1]', 'top');
     add_rewrite_rule('^settings/?$', 'index.php?jalasupport_view=settings', 'top');
 
+    // The application routes need pretty permalinks; new installs default to
+    // plain links, so switch them on once.
+    if (get_option('permalink_structure') === '') {
+        update_option('permalink_structure', '/%postname%/');
+        delete_option('jalasupport_theme_routes');
+    }
+
     if (get_option('jalasupport_theme_routes') !== ROUTES_VERSION) {
         flush_rewrite_rules(false);
         update_option('jalasupport_theme_routes', ROUTES_VERSION, false);
