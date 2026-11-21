@@ -381,7 +381,7 @@ npm run dev        # Vite dev server with hot reload
 | URL | Blade view | Notes |
 |---|---|---|
 | `/` | `app/dashboard` | Ticket counts and recent activity |
-| `/tickets/` | `app/tickets/index` | Search, filters, sorting, pagination (state kept in the URL) |
+| `/tickets/` | `app/tickets/index` | Search, filters, sorting, numbered pagination with 10 / 25 / 50 / 100 rows per page (state kept in the URL) |
 | `/tickets/new/` | `app/tickets/create` | Create ticket form |
 | `/tickets/{id}/` | `app/tickets/show` | Details, status/priority/category controls, editing, AI panel |
 | `/settings/` | `app/settings` | Read-only configuration (administrators) |
