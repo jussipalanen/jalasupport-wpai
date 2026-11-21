@@ -7,6 +7,9 @@ services:
       dockerfile: docker/php/Dockerfile
       target: dev
       args:
+        PHP_VERSION: ${PHP_VERSION:-8.5}
+        COMPOSER_VERSION: ${COMPOSER_VERSION:-2.11.2}
+        WP_CLI_VERSION: ${WP_CLI_VERSION:-2.12.0}
         UID: ${HOST_UID:-1000}
         GID: ${HOST_GID:-1000}
     env_file: .env
@@ -22,7 +25,7 @@ services:
     restart: unless-stopped
 
   db:
-    image: mysql:8.4
+    image: mysql:${MYSQL_VERSION:-8.4}
     environment:
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${DB_USER}
@@ -37,6 +40,22 @@ services:
       interval: 5s
       timeout: 5s
       retries: 20
+    restart: unless-stopped
+
+  # Web GUI for MySQL (local development only). Signs in automatically as the
+  # application database user; reachable only from this machine (127.0.0.1).
+  phpmyadmin:
+    image: phpmyadmin:${PHPMYADMIN_VERSION:-5.2}
+    environment:
+      PMA_HOST: db
+      PMA_USER: ${DB_USER}
+      PMA_PASSWORD: ${DB_PASSWORD}
+      UPLOAD_LIMIT: 64M
+    ports:
+      - "127.0.0.1:${PMA_PORT:-8081}:80"
+    depends_on:
+      db:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:

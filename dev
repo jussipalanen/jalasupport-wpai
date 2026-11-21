@@ -45,13 +45,13 @@ Docker
     ps | status       Show service status
     logs [svc]        Follow logs (default: app)
     shell             Open a shell in the app container
-    db                Open a MySQL shell
+    db [args]         MySQL shell, or run SQL: ./dev db -e "SHOW TABLES"
     reset             Stop the stack and DELETE the database volume (asks first)
 
 Project
     setup             Install WordPress, activate ACF, plugin and theme
     composer <args>   Run Composer in the app container
-    wp <args>         Run WP-CLI in the app container
+    wp <args>         Run WP-CLI in the app container, e.g. ./dev wp plugin list
     test              Run the Pest test suite
     lint [--fix]      Run all linters: Pint, PHPStan, ESLint, editorconfig (--fix auto-fixes)
     npm <args>        Run npm in the theme directory (on the host)
@@ -88,8 +88,12 @@ case "$command" in
         app_exec bash
         ;;
     db)
+        # MySQL client as the application user; extra arguments go to mysql,
+        # e.g. ./dev db -e "SHOW TABLES". MYSQL_PWD keeps the password off the command line.
         ensure_env
-        "${COMPOSE[@]}" exec db sh -c 'mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"'
+        tty=()
+        [ -t 0 ] && [ -t 1 ] || tty=(-T)
+        "${COMPOSE[@]}" exec "${tty[@]}" db sh -c 'MYSQL_PWD="$MYSQL_PASSWORD" exec mysql -u"$MYSQL_USER" "$MYSQL_DATABASE" "$@"' mysql "$@"
         ;;
     reset)
         read -r -p "This deletes the local database volume. Continue? [y/N] " answer

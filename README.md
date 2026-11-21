@@ -86,7 +86,7 @@ rather than a traditional website:
 
 | Layer | Technology |
 |---|---|
-| Backend | PHP 8.3+, WordPress 7.1, Roots Bedrock, Roots Acorn 6, Composer |
+| Backend | PHP 8.3+ (Docker runtime: PHP 8.5), WordPress 7.1, Roots Bedrock, Roots Acorn 6, Composer |
 | Data | MySQL 8.4, WordPress posts + post meta, Advanced Custom Fields 6 |
 | Frontend | Roots Sage 11, Blade templates and components, Tailwind CSS 4, Alpine.js 3, Vite 8 |
 | AI | Azure OpenAI (server-side PHP, structured JSON output) |
@@ -182,6 +182,7 @@ cp .env.example .env   # 1. set DB passwords and generate salts at https://roots
 | <http://localhost:8080> | Application |
 | <http://localhost:8080/wp/wp-admin/> | WordPress admin |
 | <http://localhost:8080/wp-json/jalasupport/v1/> | REST API |
+| <http://127.0.0.1:8081> | phpMyAdmin (MySQL web GUI, signs in automatically) |
 
 Optional: create a support agent user.
 
@@ -225,16 +226,31 @@ Run `./dev help` for the full list.
 | `./dev ps` / `./dev status` | Service status |
 | `./dev logs [svc]` | Follow logs (default `app`) |
 | `./dev shell` | Shell in the app container |
-| `./dev db` | MySQL shell |
+| `./dev db [args]` | MySQL shell as the app user, or run SQL with `-e` |
 | `./dev reset` | Stop and **delete** the database volume (asks for confirmation) |
 | `./dev setup` | Install WordPress and activate ACF, plugin and theme |
 | `./dev composer <args>` | Composer in the container |
-| `./dev wp <args>` | WP-CLI in the container |
+| `./dev wp <args>` | Any WP-CLI command in the container |
 | `./dev test` | Pest test suite |
 | `./dev lint [--fix]` | All linters: Pint, PHPStan, ESLint, editorconfig (`--fix` auto-fixes style) |
 | `./dev npm <args>` | npm in the theme directory (host) |
 | `./dev assets` | `npm install` (root tooling and theme) + theme `npm run build` |
 | `./dev vite` | Vite dev server for the theme |
+
+**Database and WP-CLI examples**
+
+```bash
+./dev db                                   # interactive mysql> prompt
+./dev db -e "SHOW TABLES"                  # run a single query
+./dev db < dump.sql                        # import an SQL file
+
+./dev wp plugin list                       # any WP-CLI command
+./dev wp user list --role=jalasupport_agent
+./dev wp post list --post_type=ticket --fields=ID,post_title
+./dev wp user create agent agent@example.com --role=jalasupport_agent --prompt=user_pass
+./dev wp db export - > backup.sql          # database backup
+./dev wp shell                             # interactive PHP shell with WordPress loaded
+```
 
 </details>
 
@@ -245,11 +261,55 @@ Run `./dev help` for the full list.
 
 | Service | Description |
 |---|---|
-| `app` | PHP 8.3 + Apache, document root `web/`, port `${APP_PORT:-8080}`, Composer and WP-CLI included |
+| `app` | PHP 8.5 + Apache (configurable with `PHP_VERSION`), document root `web/`, port `${APP_PORT:-8080}`, Composer and WP-CLI included |
 | `db` | MySQL 8.4, persistent `db-data` volume, bound to `127.0.0.1:${DB_PORT:-3306}` |
+| `phpmyadmin` | phpMyAdmin 5.2 web GUI for MySQL on `127.0.0.1:${PMA_PORT:-8081}`. Signs in automatically as `DB_USER`, local development only |
 
 `www-data` inside the container is remapped to `HOST_UID`/`HOST_GID` (default
 `1000`) so bind-mounted files stay writable.
+
+**Versions.** The Dockerfile reads every version from a build argument
+(`PHP_VERSION`, `COMPOSER_VERSION`, `WP_CLI_VERSION`), and Compose passes them
+from `.env`, along with `MYSQL_VERSION` and `PHPMYADMIN_VERSION`. The WP-CLI
+download is verified against its published SHA-512 checksum. PHP 8.5 is the
+default: PHP 8.6 was tested but isn't supported yet (WP-CLI deprecation
+notices, and the official image ships without `mbstring`).
+
+</details>
+
+<details>
+<summary><b>🧰 WP-CLI on the host (optional)</b></summary>
+
+<br>
+
+WP-CLI is already included in the Docker image (`./dev wp …`), so a host
+install is optional. It's useful if you prefer to run `wp` directly. The
+snippet installs WP-CLI only if it is missing:
+
+```bash
+if ! command -v wp >/dev/null 2>&1; then
+    curl -fsSLO https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+    php wp-cli.phar --info                 # verify the download runs
+    chmod +x wp-cli.phar
+    sudo mv wp-cli.phar /usr/local/bin/wp
+else
+    echo "WP-CLI is already installed: $(wp --version)"
+fi
+```
+
+To connect from the host to the Docker database, add `DB_HOST='127.0.0.1'` to
+`.env`. Inside Docker Compose the `app` container still uses `db`, because the
+Compose `environment` setting takes precedence over `.env`. The project's
+`wp-cli.yml` already points WP-CLI at `web/wp`.
+
+```bash
+wp option get blogname
+wp plugin list
+```
+
+Host requirements: PHP 8.3+ with the `mysqli` extension. The `wp db …` commands
+also need a MySQL/MariaDB client on the host, so prefer `./dev wp db …`, which
+already has everything set up.
 
 </details>
 
@@ -291,7 +351,8 @@ Service settings in Azure). **Never commit `.env`.**
 | `AZURE_OPENAI_USE_MANAGED_IDENTITY` | `true` to authenticate with the App Service managed identity (Entra ID) |
 | `AZURE_OPENAI_API_VERSION` | Default `2024-10-21` |
 | `AZURE_OPENAI_TIMEOUT` | Request timeout in seconds (default `30`) |
-| `APP_PORT`, `DB_PORT`, `HOST_UID`, `HOST_GID` | Optional Docker Compose overrides |
+| `APP_PORT`, `DB_PORT`, `PMA_PORT`, `HOST_UID`, `HOST_GID` | Optional Docker Compose overrides |
+| `PHP_VERSION`, `COMPOSER_VERSION`, `WP_CLI_VERSION`, `MYSQL_VERSION`, `PHPMYADMIN_VERSION` | Image and tool versions (defaults `8.5`, `2.11.2`, `2.12.0`, `8.4`, `5.2`). Rebuild with `./dev build` after changing them |
 
 </details>
 
@@ -423,7 +484,7 @@ managed identity) and AI rate limiting.
 Every pull request runs the lightweight checks in
 [`.github/workflows/ci.yml`](.github/workflows/ci.yml):
 
-- **PHP:** `composer validate`, Pint code style, PHPStan static analysis, Pest unit tests (PHP 8.3)
+- **PHP 8.3 and 8.5:** `composer validate`, Pint code style, PHPStan static analysis, Pest unit tests (the minimum supported version and the Docker runtime)
 - **Theme:** ESLint and `npm run build`
 - **Editorconfig:** indentation and whitespace rules for every file
 
