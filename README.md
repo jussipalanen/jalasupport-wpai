@@ -13,6 +13,7 @@
 ![Acorn](https://img.shields.io/badge/Roots-Acorn%206-525DDC?logo=roots&logoColor=white)
 ![ACF](https://img.shields.io/badge/ACF-6.8-00E4BC?logo=wordpress&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL-8.4-4479A1?logo=mysql&logoColor=white)
+![Wordfence](https://img.shields.io/badge/Security-Wordfence-00709E?logo=wordpress&logoColor=white)
 
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4-06B6D4?logo=tailwindcss&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)
@@ -60,6 +61,7 @@ rather than a traditional website:
 | | Feature | Status |
 |---|---|:-:|
 | 🔐 | WordPress authentication, Support Agent role, dedicated ticket capabilities | ✅ |
+| 🛡️ | Wordfence (free): malware and vulnerability scans, firewall, login security | ✅ |
 | 🎫 | Private `ticket` post type (not public, not exposed via `wp/v2`) | ✅ |
 | 🗂️ | Ticket metadata with ACF: status, priority, category, customer, AI fields | ✅ |
 | 🔌 | REST API `jalasupport/v1`: list, search, filter, sort, paginate, CRUD, stats | ✅ |
@@ -88,6 +90,7 @@ rather than a traditional website:
 |---|---|
 | Backend | PHP 8.3+ (Docker runtime: PHP 8.5), WordPress 7.1, Roots Bedrock, Roots Acorn 6, Composer |
 | Data | MySQL 8.4, WordPress posts + post meta, Advanced Custom Fields 6 |
+| Security | Wordfence (free), dedicated capabilities, REST permission checks |
 | Frontend | Roots Sage 11, Blade templates and components, Tailwind CSS 4, Alpine.js 3, Vite 8 |
 | AI | Azure OpenAI (server-side PHP, structured JSON output) |
 | Infrastructure | Docker, Docker Compose, Azure App Service, Azure Database for MySQL, Azure Container Registry |
@@ -173,7 +176,7 @@ Key decisions:
 ```bash
 cp .env.example .env   # 1. set DB passwords and generate salts at https://roots.io/salts.html
 ./dev up               # 2. build the image, start MySQL, install Composer dependencies
-./dev setup            # 3. install WordPress, activate ACF, the plugin and the theme
+./dev setup            # 3. install WordPress, activate ACF, Wordfence, the plugin and the theme
 ./dev assets           # 4. install theme npm dependencies and build assets
 ```
 
@@ -200,7 +203,7 @@ docker compose up -d
 docker compose exec -u www-data app wp core install \
     --url=http://localhost:8080 --title="JalaSupport AI" \
     --admin_user=admin --admin_email=admin@example.com --prompt=admin_password
-docker compose exec -u www-data app wp plugin activate advanced-custom-fields jalasupport
+docker compose exec -u www-data app wp plugin activate advanced-custom-fields wordfence jalasupport
 docker compose exec -u www-data app wp theme activate jalasupport
 cd web/app/themes/jalasupport && npm install && npm run build
 ```
@@ -228,7 +231,7 @@ Run `./dev help` for the full list.
 | `./dev shell` | Shell in the app container |
 | `./dev db [args]` | MySQL shell as the app user, or run SQL with `-e` |
 | `./dev reset` | Stop and **delete** the database volume (asks for confirmation) |
-| `./dev setup` | Install WordPress and activate ACF, plugin and theme |
+| `./dev setup` | Install WordPress and activate ACF, Wordfence, plugin and theme |
 | `./dev composer <args>` | Composer in the container |
 | `./dev wp <args>` | Any WP-CLI command in the container |
 | `./dev test` | Pest test suite |
@@ -440,6 +443,40 @@ with ticket capabilities.
 - Ticket content is treated as untrusted input to the AI. AI output is validated
   and only saved after the user confirms it.
 - The plugin and theme file editors in wp-admin are disabled (Bedrock defaults).
+- **Wordfence** (free) provides malware and vulnerability scanning, a web
+  application firewall, brute-force protection, two-factor authentication and
+  login security. See *Wordfence* below.
+
+**Wordfence**
+
+Installed with Composer (`wp-plugin/wordfence`) and activated by `./dev setup`.
+
+1. **Register the free license once:** WP admin → *Wordfence* → follow the
+   onboarding (email address and Wordfence terms). Until then, firewall rules
+   and malware signatures aren't downloaded, and `web/app/debug.log` shows
+   `Wordfence WAF file read failed: … rules.php` warnings.
+2. **Run a scan:** *Wordfence → Scan → Start New Scan*. Bedrock keeps WordPress
+   core in `web/wp`; Wordfence scans it as a subdirectory install.
+3. **Firewall:** works in *Basic* mode out of the box (loaded as a plugin).
+   *Extended Protection* loads the firewall before WordPress through
+   `auto_prepend_file`. The Apache vhost doesn't read `.htaccess` or
+   `.user.ini`, so for production it has to be set in the image's PHP
+   configuration (part of the Azure deployment phase).
+
+Notes:
+
+- **Free tier:** new firewall rules and malware signatures arrive 30 days
+  after paid users get them.
+- **Application passwords stay enabled.** Wordfence disables them by default,
+  but the REST API documents them for API clients (HTTPS only). `./dev setup`
+  turns them back on (`loginSec_disableApplicationPasswords = 0`). Change this
+  in *Wordfence → Login Security → Settings* if no API clients are needed.
+- **Runtime data** (`web/app/wflogs/`) holds site-specific firewall
+  configuration, keys, attack data and a GeoIP database. It's excluded from
+  Git and Docker builds and recreated on each site. On Azure App Service it
+  must live on persistent storage.
+- **Updates** come through Composer (`composer update wp-plugin/wordfence`),
+  since Bedrock disables plugin updates from wp-admin outside development.
 
 </details>
 
