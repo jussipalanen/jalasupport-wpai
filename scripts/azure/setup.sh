@@ -11,6 +11,7 @@
 # Safe to re-run: existing resources are kept and the app is updated.
 # See docs/DEPLOYMENT.md.
 
+# shellcheck source=scripts/azure/lib.sh
 . "$(dirname "$0")/lib.sh"
 
 load_config

@@ -24,6 +24,9 @@ FROM php:${PHP_VERSION}-apache AS base
 
 # Build the PHP extensions, then keep only the runtime libraries they link
 # against and remove the -dev packages (pattern from the official PHP images).
+# DL4006: no pipefail on purpose; dpkg-query exits non-zero for files no
+# package owns. SC2086: $extensions must split into separate names.
+# hadolint ignore=DL4006,SC2086
 RUN set -eux; \
     apt-get update; \
     apt-get install -y --no-install-recommends unzip less default-mysql-client; \
@@ -60,8 +63,10 @@ COPY docker/apache/000-default.conf /etc/apache2/sites-available/000-default.con
 # Composer
 COPY --from=composer /usr/bin/composer /usr/local/bin/composer
 
-# WP-CLI, verified against the published SHA-512 checksum.
+# WP-CLI, verified against the published SHA-512 checksum (sha512sum is the
+# last command of the pipe, so a mismatch fails the build).
 ARG WP_CLI_VERSION
+# hadolint ignore=DL4006
 RUN base="https://github.com/wp-cli/wp-cli/releases/download/v${WP_CLI_VERSION}/wp-cli-${WP_CLI_VERSION}.phar" \
     && curl -fsSL -o /usr/local/bin/wp "${base}" \
     && echo "$(curl -fsSL "${base}.sha512")  /usr/local/bin/wp" | sha512sum -c - \
@@ -143,7 +148,7 @@ RUN mkdir -p web/app/uploads web/app/wflogs web/app/cache \
     && printf 'ok\n' > web/healthz.txt
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-    CMD curl -fsS http://localhost/healthz.txt || exit 1
+    CMD ["curl", "-fsS", "-o", "/dev/null", "http://localhost/healthz.txt"]
 
 EXPOSE 80
 CMD ["apache2-foreground"]

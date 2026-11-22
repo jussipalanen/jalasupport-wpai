@@ -45,6 +45,7 @@ load_config() {
     [[ "$AZ_PREFIX" =~ ^[a-z0-9]{3,14}$ ]] || fail "AZ_PREFIX must be 3-14 lowercase letters or digits (storage account names allow 24 characters)."
 }
 
+# shellcheck disable=SC2034  # The names below are used by the scripts that source this file.
 # Generated values (name suffix, database password, WordPress salts) are kept
 # in a local git-ignored file so the scripts can be re-run safely.
 load_state() {

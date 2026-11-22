@@ -98,6 +98,7 @@ case "$command" in
         ensure_env
         tty=()
         [ -t 0 ] && [ -t 1 ] || tty=(-T)
+        # shellcheck disable=SC2016  # $MYSQL_* must expand inside the db container
         "${COMPOSE[@]}" exec "${tty[@]}" db sh -c 'MYSQL_PWD="$MYSQL_PASSWORD" exec mysql -u"$MYSQL_USER" "$MYSQL_DATABASE" "$@"' mysql "$@"
         ;;
     reset)
@@ -168,6 +169,7 @@ case "$command" in
             up)
                 docker build --target prod -t jalasupport-app:prod -f docker/php/Dockerfile .
                 "${COMPOSE[@]}" up -d db
+                # shellcheck disable=SC2016  # Go template for docker inspect, not a shell expansion
                 network="$("${COMPOSE[@]}" ps -q db | xargs docker inspect -f '{{range $k, $v := .NetworkSettings.Networks}}{{$k}}{{end}}')"
                 docker rm -f "$prod_name" > /dev/null 2>&1 || true
                 # Same database and salts as local development, production settings.

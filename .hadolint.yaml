@@ -1,0 +1,7 @@
+# Hadolint configuration (Dockerfile linter), used by the Lint workflow.
+failure-threshold: warning
+ignored:
+  # Pinning Debian package versions breaks builds whenever security updates
+  # are published; packages are updated by rebuilding on the latest base image
+  # (Dependabot keeps the base image current).
+  - DL3008

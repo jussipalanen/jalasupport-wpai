@@ -8,6 +8,7 @@
 #   BACKUP=1 scripts/azure/teardown.sh   # back up to ./backups, then delete
 #   DRY_RUN=1 scripts/azure/teardown.sh  # preview
 
+# shellcheck source=scripts/azure/lib.sh
 . "$(dirname "$0")/lib.sh"
 
 load_config
