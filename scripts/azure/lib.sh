@@ -73,10 +73,9 @@ load_state() {
     IMAGE_REPO="jalasupport"
 }
 
-require_tools() {
+# Azure CLI checks only (read-only commands such as status.sh).
+require_azure() {
     command -v az > /dev/null || fail "Azure CLI (az) is not installed."
-    command -v docker > /dev/null || fail "Docker is not installed."
-    docker info > /dev/null 2>&1 || fail "Docker is not running."
     az account show > /dev/null 2>&1 || fail "Not logged in to Azure. Run: az login"
 
     if [ -n "${AZ_SUBSCRIPTION:-}" ]; then
@@ -84,6 +83,13 @@ require_tools() {
     fi
 
     az extension add --name containerapp --upgrade --yes --only-show-errors > /dev/null
+}
+
+# Azure CLI and Docker (scripts that build images).
+require_tools() {
+    command -v docker > /dev/null || fail "Docker is not installed."
+    docker info > /dev/null 2>&1 || fail "Docker is not running."
+    require_azure
 }
 
 confirm() {

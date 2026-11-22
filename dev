@@ -62,6 +62,14 @@ Production image (local test)
     prod [up]         Build and run the production image on http://localhost:8090 (local DB, TLS)
     prod down         Stop and remove the production test container
     prod logs         Follow the production test container logs
+
+Azure (manual, nothing runs automatically; see docs/DEPLOYMENT.md)
+    azure setup       Create or update the free-tier deployment (asks first)
+    azure deploy      Build, push and roll out the current code
+    azure status      Show the deployment state (read-only; --health wakes the app)
+    azure github-oidc One-time access for the GitHub Actions Deploy workflow
+    azure teardown    Delete the whole deployment (BACKUP=1 exports data first)
+    Preview any of them without changes: DRY_RUN=1 ./dev azure setup
 EOF
 }
 
@@ -190,6 +198,24 @@ case "$command" in
                 ;;
             *)
                 echo "Usage: ./dev prod [up|down|logs]" >&2
+                exit 1
+                ;;
+        esac
+        ;;
+    azure)
+        # Thin wrappers around scripts/azure/*.sh (same prompts, DRY_RUN=1 supported).
+        case "${1:-help}" in
+            setup | deploy | status | teardown | github-oidc)
+                script="scripts/azure/${1}.sh"
+                shift
+                exec "$script" "$@"
+                ;;
+            help | -h | --help)
+                usage | sed -n '/^Azure/,/DRY_RUN=1 \.\/dev azure setup/p'
+                ;;
+            *)
+                echo "Unknown azure command: $1" >&2
+                usage | sed -n '/^Azure/,/DRY_RUN=1 \.\/dev azure setup/p' >&2
                 exit 1
                 ;;
         esac
