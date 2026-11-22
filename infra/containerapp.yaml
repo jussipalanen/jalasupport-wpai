@@ -1,0 +1,145 @@
+# Azure Container Apps definition for JalaSupport AI.
+#
+# Template rendered by scripts/azure/setup.sh: ${PLACEHOLDERS} are filled from
+# scripts/azure/config.env and the generated scripts/azure/.state.env. The
+# rendered file contains secrets, is written to a private temporary file and
+# deleted after `az containerapp create/update --yaml`. Never commit rendered
+# output.
+#
+# Lines between "# BEGIN optional: ai" and "# END optional: ai" are kept only
+# when GEMINI_API_KEY is set.
+
+location: ${AZ_LOCATION}
+
+identity:
+  type: UserAssigned
+  userAssignedIdentities:
+    "${IDENTITY_ID}": {}
+
+properties:
+  managedEnvironmentId: ${ENV_ID}
+
+  configuration:
+    activeRevisionsMode: Single
+    ingress:
+      external: true
+      targetPort: 80
+      transport: auto
+      allowInsecure: false
+    registries:
+      # Pulled with the managed identity (AcrPull); no registry passwords.
+      - server: ${ACR_SERVER}
+        identity: ${IDENTITY_ID}
+    secrets:
+      - name: db-password
+        value: "${MYSQL_ADMIN_PASSWORD}"
+      - name: auth-key
+        value: "${AUTH_KEY}"
+      - name: secure-auth-key
+        value: "${SECURE_AUTH_KEY}"
+      - name: logged-in-key
+        value: "${LOGGED_IN_KEY}"
+      - name: nonce-key
+        value: "${NONCE_KEY}"
+      - name: auth-salt
+        value: "${AUTH_SALT}"
+      - name: secure-auth-salt
+        value: "${SECURE_AUTH_SALT}"
+      - name: logged-in-salt
+        value: "${LOGGED_IN_SALT}"
+      - name: nonce-salt
+        value: "${NONCE_SALT}"
+      # BEGIN optional: ai
+      - name: gemini-api-key
+        value: "${GEMINI_API_KEY}"
+      # END optional: ai
+
+  template:
+    containers:
+      - name: app
+        image: ${IMAGE}
+        resources:
+          cpu: ${APP_CPU}
+          memory: ${APP_MEMORY}
+        env:
+          - name: WP_ENV
+            value: production
+          - name: WP_HOME
+            value: "${APP_URL}"
+          - name: WP_SITEURL
+            value: "${APP_URL}/wp"
+          - name: DB_HOST
+            value: "${DB_HOST}"
+          - name: DB_NAME
+            value: "${DB_NAME}"
+          - name: DB_USER
+            value: "${MYSQL_ADMIN_USER}"
+          - name: DB_PASSWORD
+            secretRef: db-password
+          - name: DB_SSL
+            value: "true"
+          - name: AUTH_KEY
+            secretRef: auth-key
+          - name: SECURE_AUTH_KEY
+            secretRef: secure-auth-key
+          - name: LOGGED_IN_KEY
+            secretRef: logged-in-key
+          - name: NONCE_KEY
+            secretRef: nonce-key
+          - name: AUTH_SALT
+            secretRef: auth-salt
+          - name: SECURE_AUTH_SALT
+            secretRef: secure-auth-salt
+          - name: LOGGED_IN_SALT
+            secretRef: logged-in-salt
+          - name: NONCE_SALT
+            secretRef: nonce-salt
+          # BEGIN optional: ai
+          - name: AI_PROVIDER
+            value: "${AI_PROVIDER}"
+          - name: GEMINI_API_KEY
+            secretRef: gemini-api-key
+          - name: GEMINI_MODEL
+            value: "${GEMINI_MODEL}"
+          - name: AI_DAILY_LIMIT
+            value: "${AI_DAILY_LIMIT}"
+          # END optional: ai
+        volumeMounts:
+          - volumeName: uploads
+            mountPath: /var/www/html/web/app/uploads
+          - volumeName: wflogs
+            mountPath: /var/www/html/web/app/wflogs
+        probes:
+          # Static file served by Apache: no WordPress or database involved.
+          - type: Startup
+            httpGet:
+              path: /healthz.txt
+              port: 80
+            periodSeconds: 5
+            failureThreshold: 24
+          - type: Liveness
+            httpGet:
+              path: /healthz.txt
+              port: 80
+            periodSeconds: 30
+
+    # Free tier: scale to zero when idle, never more than one replica.
+    scale:
+      minReplicas: 0
+      maxReplicas: 1
+      rules:
+        - name: http
+          http:
+            metadata:
+              concurrentRequests: "20"
+
+    # Azure Files shares (container filesystems are not persistent).
+    volumes:
+      - name: uploads
+        storageType: AzureFile
+        storageName: uploads
+        mountOptions: "uid=33,gid=33,dir_mode=0775,file_mode=0664"
+      - name: wflogs
+        storageType: AzureFile
+        storageName: wflogs
+        mountOptions: "uid=33,gid=33,dir_mode=0775,file_mode=0664"

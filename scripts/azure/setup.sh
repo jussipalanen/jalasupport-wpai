@@ -122,6 +122,8 @@ if ! az identity show -g "$AZ_RESOURCE_GROUP" -n "$IDENTITY_NAME" --output none 
     run az identity create -g "$AZ_RESOURCE_GROUP" -n "$IDENTITY_NAME" -l "$AZ_LOCATION" --only-show-errors --output none
 fi
 
+# IDENTITY_ID is also read by render_template (by name).
+# shellcheck disable=SC2034
 if [ "$DRY_RUN" = "1" ]; then
     IDENTITY_ID="<identity-resource-id>"
     IDENTITY_PRINCIPAL="<identity-principal-id>"
@@ -149,6 +151,8 @@ if ! az containerapp env show -g "$AZ_RESOURCE_GROUP" -n "$ENV_NAME" --output no
     run az containerapp env create -g "$AZ_RESOURCE_GROUP" -n "$ENV_NAME" -l "$AZ_LOCATION" --logs-destination none --only-show-errors --output none
 fi
 
+# ENV_ID is read by render_template (by name).
+# shellcheck disable=SC2034
 if [ "$DRY_RUN" = "1" ]; then
     STORAGE_KEY="<storage-key>"
     ENV_ID="<environment-resource-id>"
@@ -181,119 +185,32 @@ APP_YAML="$(mktemp)"
 chmod 600 "$APP_YAML"
 trap 'rm -f "$APP_YAML"' EXIT
 
-ai_secrets=""
-ai_env=""
+# Read by render_template (by name).
+# shellcheck disable=SC2034
+ACR_SERVER="${ACR_NAME}.azurecr.io"
+# shellcheck disable=SC2034
+DB_HOST="${MYSQL_SERVER}.mysql.database.azure.com"
+
+INCLUDE_OPTIONAL=""
 if [ -n "${GEMINI_API_KEY:-}" ]; then
     [[ "$GEMINI_API_KEY" =~ ^[A-Za-z0-9_-]{20,}$ ]] || fail "GEMINI_API_KEY has an unexpected format."
-    ai_secrets="            -   name: gemini-api-key
-                value: \"${GEMINI_API_KEY}\"
-"
-    ai_env="                    -   name: AI_PROVIDER
-                        value: \"${AI_PROVIDER:-gemini}\"
-                    -   name: GEMINI_API_KEY
-                        secretRef: gemini-api-key
-                    -   name: GEMINI_MODEL
-                        value: \"${GEMINI_MODEL:-gemini-flash-lite-latest}\"
-                    -   name: AI_DAILY_LIMIT
-                        value: \"${AI_DAILY_LIMIT:-200}\"
-"
+    AI_PROVIDER="${AI_PROVIDER:-gemini}"
+    GEMINI_MODEL="${GEMINI_MODEL:-gemini-flash-lite-latest}"
+    AI_DAILY_LIMIT="${AI_DAILY_LIMIT:-200}"
+    INCLUDE_OPTIONAL="ai"
 else
     note "GEMINI_API_KEY is empty: deploying without AI features."
 fi
 
-salt_secrets=""
-salt_env=""
-for key in AUTH_KEY SECURE_AUTH_KEY LOGGED_IN_KEY NONCE_KEY AUTH_SALT SECURE_AUTH_SALT LOGGED_IN_SALT NONCE_SALT; do
-    secret_name="$(echo "$key" | tr 'A-Z_' 'a-z-')"
-    salt_secrets+="            -   name: ${secret_name}
-                value: \"${!key}\"
-"
-    salt_env+="                    -   name: ${key}
-                        secretRef: ${secret_name}
-"
-done
-
-# YAML with 4-space indentation ("-   " list items keep the 4-space grid).
-cat > "$APP_YAML" <<YAML
-location: ${AZ_LOCATION}
-identity:
-    type: UserAssigned
-    userAssignedIdentities:
-        "${IDENTITY_ID}": {}
-properties:
-    managedEnvironmentId: ${ENV_ID}
-    configuration:
-        activeRevisionsMode: Single
-        ingress:
-            external: true
-            targetPort: 80
-            transport: auto
-            allowInsecure: false
-        registries:
-            -   server: ${ACR_NAME}.azurecr.io
-                identity: ${IDENTITY_ID}
-        secrets:
-            -   name: db-password
-                value: "${MYSQL_ADMIN_PASSWORD}"
-${salt_secrets}${ai_secrets}    template:
-        containers:
-            -   name: app
-                image: ${IMAGE}
-                resources:
-                    cpu: ${APP_CPU}
-                    memory: ${APP_MEMORY}
-                env:
-                    -   name: WP_ENV
-                        value: production
-                    -   name: WP_HOME
-                        value: "${APP_URL}"
-                    -   name: WP_SITEURL
-                        value: "${APP_URL}/wp"
-                    -   name: DB_HOST
-                        value: "${MYSQL_SERVER}.mysql.database.azure.com"
-                    -   name: DB_NAME
-                        value: "${DB_NAME}"
-                    -   name: DB_USER
-                        value: "${MYSQL_ADMIN_USER}"
-                    -   name: DB_PASSWORD
-                        secretRef: db-password
-                    -   name: DB_SSL
-                        value: "true"
-${salt_env}${ai_env}                volumeMounts:
-                    -   volumeName: uploads
-                        mountPath: /var/www/html/web/app/uploads
-                    -   volumeName: wflogs
-                        mountPath: /var/www/html/web/app/wflogs
-                probes:
-                    -   type: Startup
-                        httpGet:
-                            path: /healthz.txt
-                            port: 80
-                        periodSeconds: 5
-                        failureThreshold: 24
-                    -   type: Liveness
-                        httpGet:
-                            path: /healthz.txt
-                            port: 80
-                        periodSeconds: 30
-        scale:
-            minReplicas: 0
-            maxReplicas: 1
-            rules:
-                -   name: http
-                    http:
-                        metadata:
-                            concurrentRequests: "20"
-        volumes:
-            -   name: uploads
-                storageType: AzureFile
-                storageName: uploads
-                mountOptions: "uid=33,gid=33,dir_mode=0775,file_mode=0664"
-            -   name: wflogs
-                storageType: AzureFile
-                storageName: wflogs
-                mountOptions: "uid=33,gid=33,dir_mode=0775,file_mode=0664"
-YAML
+# The app definition lives in infra/containerapp.yaml; render it with the
+# settings and secrets into the private temporary file.
+render_template "$PROJECT_DIR/infra/containerapp.yaml" \
+    AZ_LOCATION IDENTITY_ID ENV_ID ACR_SERVER IMAGE APP_CPU APP_MEMORY APP_URL \
+    DB_HOST DB_NAME MYSQL_ADMIN_USER MYSQL_ADMIN_PASSWORD \
+    AUTH_KEY SECURE_AUTH_KEY LOGGED_IN_KEY NONCE_KEY \
+    AUTH_SALT SECURE_AUTH_SALT LOGGED_IN_SALT NONCE_SALT \
+    AI_PROVIDER GEMINI_API_KEY GEMINI_MODEL AI_DAILY_LIMIT \
+    > "$APP_YAML"
 
 if [ "$DRY_RUN" = "1" ]; then
     note "[dry-run] Container app definition (secrets masked):"
