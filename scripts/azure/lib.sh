@@ -119,3 +119,44 @@ build_and_push() {
     run docker build --target prod -f "$PROJECT_DIR/docker/php/Dockerfile" -t "$image" "$PROJECT_DIR"
     run docker push "$image"
 }
+
+# Render a template to stdout.
+#   render_template <template> NAME...
+# Replaces ${NAME} for the listed variable names only, removes comment lines,
+# and keeps "# BEGIN optional: <block>" ... "# END optional: <block>" sections
+# only when <block> is listed in INCLUDE_OPTIONAL. Fails on any placeholder
+# left unresolved.
+render_template() {
+    local template="$1"
+    shift
+    local -a assignments=()
+    local name
+    for name in "$@"; do
+        assignments+=("TPL_${name}=${!name-}")
+    done
+
+    # shellcheck disable=SC2016  # The awk program is deliberately single-quoted.
+    env "${assignments[@]}" awk -v names="$*" -v optional=" ${INCLUDE_OPTIONAL:-} " '
+        BEGIN { count = split(names, keys, " ") }
+        /^[[:space:]]*# BEGIN optional: / { skip = index(optional, " " $NF " ") == 0; next }
+        /^[[:space:]]*# END optional: / { skip = 0; next }
+        skip { next }
+        /^[[:space:]]*#/ { next }
+        {
+            line = $0
+            for (i = 1; i <= count; i++) {
+                token = "${" keys[i] "}"
+                value = ENVIRON["TPL_" keys[i]]
+                while ((pos = index(line, token)) > 0) {
+                    line = substr(line, 1, pos - 1) value substr(line, pos + length(token))
+                }
+            }
+            if (line ~ /\$\{[A-Za-z_][A-Za-z0-9_]*\}/) {
+                print "Unresolved placeholder in " FILENAME ": " line > "/dev/stderr"
+                failed = 1
+            }
+            print line
+        }
+        END { exit failed }
+    ' "$template"
+}
