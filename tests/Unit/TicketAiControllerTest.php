@@ -3,7 +3,7 @@
 use Brain\Monkey\Functions;
 use JalaSupport\Http\Controllers\TicketAiController;
 use JalaSupport\Models\Ticket;
-use JalaSupport\Services\AI\AzureOpenAIService;
+use JalaSupport\Services\AI\AiProvider;
 use JalaSupport\Services\AI\TicketAnalysis;
 use JalaSupport\Services\TicketRepository;
 use JalaSupport\Support\RateLimiter;
@@ -12,7 +12,7 @@ beforeEach(function () {
     $this->ticket = Ticket::fromPost(new WP_Post(['ID' => 3, 'post_type' => 'ticket']), []);
     $this->repository = Mockery::mock(TicketRepository::class);
     $this->repository->shouldReceive('find')->with(3)->andReturn($this->ticket);
-    $this->ai = Mockery::mock(AzureOpenAIService::class);
+    $this->ai = Mockery::mock(AiProvider::class);
     $this->controller = new TicketAiController($this->repository, $this->ai, new RateLimiter(2, 600));
     $this->request = new WP_REST_Request(['id' => 3]);
 

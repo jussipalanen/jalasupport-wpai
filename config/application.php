@@ -139,6 +139,21 @@ Config::define('LOGGED_IN_SALT', env('LOGGED_IN_SALT'));
 Config::define('NONCE_SALT', env('NONCE_SALT'));
 
 /**
+ * JalaSupport: AI provider ("azure", "gemini", or empty to use the first
+ * configured provider). AI features are disabled until a provider is set up.
+ */
+Config::define('AI_PROVIDER', env('AI_PROVIDER') ?: '');
+
+/**
+ * JalaSupport: Google Gemini (Gemini Developer API, key from Google AI Studio).
+ * Free-tier keys: Google may use submitted content to improve its products.
+ */
+Config::define('GEMINI_API_KEY', env('GEMINI_API_KEY') ?: '');
+Config::define('GEMINI_MODEL', env('GEMINI_MODEL') ?: 'gemini-flash-lite-latest');
+Config::define('GEMINI_FALLBACK_MODEL', env('GEMINI_FALLBACK_MODEL') ?: 'gemini-flash-latest');
+Config::define('GEMINI_TIMEOUT', (int) (env('GEMINI_TIMEOUT') ?: 20));
+
+/**
  * JalaSupport: Azure OpenAI
  * Keep credentials in the environment (App Service settings / Key Vault references).
  * Leave AZURE_OPENAI_API_KEY empty and set AZURE_OPENAI_USE_MANAGED_IDENTITY=true

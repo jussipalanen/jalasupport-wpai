@@ -4,7 +4,7 @@
     <x-page-header :title="__('Settings', 'jalasupport')" :description="__('Application configuration. Values come from environment variables and are read-only here.', 'jalasupport')" />
 
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <x-card class="lg:col-span-2" :title="__('AI assistance (Azure OpenAI)', 'jalasupport')">
+        <x-card class="lg:col-span-2" :title="__('AI assistance', 'jalasupport')" :description="$ai ? sprintf(__('Provider: %s', 'jalasupport'), $ai['provider']) : null">
             @if ($ai === null)
                 <x-notice type="warning">{{ __('The JalaSupport plugin is not active.', 'jalasupport') }}</x-notice>
             @else
@@ -21,12 +21,7 @@
                 </div>
 
                 <dl class="divide-y divide-white/5 text-sm">
-                    @foreach ([
-                        __('Endpoint', 'jalasupport') => $ai['endpoint'] ?: '—',
-                        __('Deployment', 'jalasupport') => $ai['deployment'] ?: '—',
-                        __('API version', 'jalasupport') => $ai['apiVersion'],
-                        __('Authentication', 'jalasupport') => $ai['auth'],
-                    ] as $label => $value)
+                    @foreach ($ai['details'] as $label => $value)
                         <div class="flex flex-col gap-1 py-3 sm:flex-row sm:justify-between">
                             <dt class="text-slate-400">{{ $label }}</dt>
                             <dd class="font-mono text-slate-100">{{ $value }}</dd>
@@ -36,9 +31,15 @@
 
                 @unless ($ai['configured'])
                     <x-notice type="info" class="mt-5">
-                        {{ __('Set AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_DEPLOYMENT and AZURE_OPENAI_API_KEY (or AZURE_OPENAI_USE_MANAGED_IDENTITY=true) in the environment. The application works without AI.', 'jalasupport') }}
+                        {{ __('Configure a provider in the environment: AI_PROVIDER=gemini with GEMINI_API_KEY, or AI_PROVIDER=azure with AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_DEPLOYMENT and AZURE_OPENAI_API_KEY. The application works without AI.', 'jalasupport') }}
                     </x-notice>
                 @endunless
+
+                @if ($ai['freeTierNotice'])
+                    <x-notice type="warning" class="mt-5">
+                        {{ __('Google Gemini free-tier keys: Google may use submitted ticket content to improve its products. Use test data, or a paid key for real customer tickets. Customer email addresses are never sent.', 'jalasupport') }}
+                    </x-notice>
+                @endif
 
                 <p class="mt-5 flex items-center gap-2 text-xs text-slate-400">
                     <x-icon name="lock" class="size-4" />

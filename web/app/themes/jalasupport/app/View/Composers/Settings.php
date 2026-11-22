@@ -2,7 +2,8 @@
 
 namespace App\View\Composers;
 
-use JalaSupport\Services\AI\AzureOpenAIConfig;
+use JalaSupport\Services\AI\AiProviderFactory;
+use JalaSupport\Services\AI\GeminiService;
 use Roots\Acorn\View\Composer;
 
 /**
@@ -30,25 +31,23 @@ class Settings extends Composer
     }
 
     /**
-     * @return array{configured: bool, endpoint: string, deployment: string, apiVersion: string, auth: string}|null
+     * The active AI provider and its non-sensitive settings.
+     *
+     * @return array{provider: string, configured: bool, details: array<string, string>, freeTierNotice: bool}|null
      */
     protected function ai(): ?array
     {
-        if (! class_exists(AzureOpenAIConfig::class)) {
+        if (! class_exists(AiProviderFactory::class)) {
             return null;
         }
 
-        $config = AzureOpenAIConfig::fromEnvironment();
-        $host = (string) wp_parse_url($config->endpoint, PHP_URL_HOST);
+        $provider = AiProviderFactory::fromEnvironment();
 
         return [
-            'configured' => $config->isConfigured(),
-            'endpoint' => $host,
-            'deployment' => $config->deployment,
-            'apiVersion' => $config->apiVersion,
-            'auth' => $config->useManagedIdentity
-                ? __('Managed identity (Microsoft Entra ID)', 'jalasupport')
-                : ($config->apiKey !== '' ? __('API key', 'jalasupport') : __('Not configured', 'jalasupport')),
+            'provider' => $provider->name(),
+            'configured' => $provider->isConfigured(),
+            'details' => array_map(static fn(string $value): string => $value !== '' ? $value : '—', $provider->describe()),
+            'freeTierNotice' => $provider instanceof GeminiService,
         ];
     }
 

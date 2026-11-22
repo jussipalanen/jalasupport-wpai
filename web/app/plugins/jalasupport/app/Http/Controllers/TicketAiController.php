@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JalaSupport\Http\Controllers;
 
-use JalaSupport\Services\AI\AzureOpenAIService;
+use JalaSupport\Services\AI\AiProvider;
 use JalaSupport\Services\AI\TicketAnalysis;
 use JalaSupport\Services\TicketRepository;
 use JalaSupport\Support\RateLimiter;
@@ -21,7 +21,7 @@ final class TicketAiController extends Controller
 {
     public function __construct(
         TicketRepository $tickets,
-        private AzureOpenAIService $ai,
+        private AiProvider $ai,
         private RateLimiter $limiter,
     ) {
         parent::__construct($tickets);
