@@ -65,4 +65,13 @@ fi
 info "Deleting resource group ${AZ_RESOURCE_GROUP} (takes a few minutes)"
 run az group delete -n "$AZ_RESOURCE_GROUP" --yes
 
+# The GitHub deploy app registration (scripts/azure/github-oidc.sh) lives in
+# Entra ID, outside the resource group.
+APP_ID="$(az ad app list --display-name "${AZ_PREFIX}-github-deploy" --query '[0].appId' -o tsv)"
+if [ -n "$APP_ID" ]; then
+    info "Deleting the GitHub deploy app registration ${AZ_PREFIX}-github-deploy"
+    run az ad app delete --id "$APP_ID"
+    note "The GitHub repository secrets/variables (AZURE_*) can be removed in the repository settings."
+fi
+
 note "Done. Generated secrets remain in scripts/azure/.state.env; delete it if you do not plan to redeploy."
