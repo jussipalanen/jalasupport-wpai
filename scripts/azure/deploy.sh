@@ -8,6 +8,7 @@
 #   DRY_RUN=1 scripts/azure/deploy.sh
 #   scripts/azure/deploy.sh
 
+# shellcheck source=scripts/azure/lib.sh
 . "$(dirname "$0")/lib.sh"
 
 load_config

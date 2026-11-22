@@ -1,0 +1,96 @@
+name: Deploy
+
+# Builds the production image, pushes it to Azure Container Registry and rolls
+# it out to Azure Container Apps. Manual trigger only (Actions -> Deploy ->
+# Run workflow, on main). Signs in to Azure with OIDC: no stored passwords.
+#
+# One-time setup: scripts/azure/github-oidc.sh (see docs/DEPLOYMENT.md).
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    name: Deploy to Azure Container Apps
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+      ACR_NAME: ${{ vars.AZURE_ACR_NAME }}
+      APP_NAME: ${{ vars.AZURE_CONTAINERAPP_NAME }}
+    steps:
+      - name: Check configuration
+        env:
+          HAS_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID != '' }}
+        run: |
+          missing=""
+          [ -n "$RESOURCE_GROUP" ] || missing="$missing AZURE_RESOURCE_GROUP"
+          [ -n "$ACR_NAME" ] || missing="$missing AZURE_ACR_NAME"
+          [ -n "$APP_NAME" ] || missing="$missing AZURE_CONTAINERAPP_NAME"
+          [ "$HAS_CLIENT_ID" = "true" ] || missing="$missing AZURE_CLIENT_ID"
+          if [ -n "$missing" ]; then
+            echo "::error::Missing repository settings:$missing. Run scripts/azure/github-oidc.sh first."
+            exit 1
+          fi
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::Deploy only from main (the Azure trust is limited to main)."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v7
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Log in to the container registry
+        run: az acr login --name "$ACR_NAME"
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Build and push the production image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: docker/php/Dockerfile
+          target: prod
+          push: true
+          tags: ${{ vars.AZURE_ACR_NAME }}.azurecr.io/jalasupport:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Roll out a new revision
+        run: |
+          az extension add --name containerapp --upgrade --yes --only-show-errors
+          az containerapp update \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "$APP_NAME" \
+            --image "${ACR_NAME}.azurecr.io/jalasupport:${GITHUB_SHA}" \
+            --only-show-errors --output none
+
+      - name: Smoke test
+        run: |
+          fqdn="$(az containerapp show -g "$RESOURCE_GROUP" -n "$APP_NAME" --query properties.configuration.ingress.fqdn -o tsv)"
+          echo "App: https://${fqdn}"
+          # Allow for a cold start (the app scales to zero when idle).
+          for _ in $(seq 1 24); do
+            if curl -fsS -o /dev/null "https://${fqdn}/healthz.txt"; then
+              echo "Healthy: https://${fqdn}"
+              echo "### Deployed :rocket:" >> "$GITHUB_STEP_SUMMARY"
+              echo "https://${fqdn} (image \`${GITHUB_SHA}\`)" >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::Health check failed: https://${fqdn}/healthz.txt"
+          exit 1

@@ -168,6 +168,33 @@ scripts/azure/deploy.sh             # build, push, roll out a new revision
 Images are tagged with the commit hash; uncommitted changes add a
 `-dirty-<timestamp>` suffix.
 
+### Deploy from GitHub Actions (optional)
+
+The [`Deploy`](../.github/workflows/deploy.yml) workflow does the same from
+GitHub: build, push to the registry, roll out a new revision, and smoke-test
+`/healthz.txt` (allowing for a cold start). It runs only when you trigger it.
+
+One-time setup (after `setup.sh`):
+
+```bash
+gh auth status                            # GitHub CLI logged in
+DRY_RUN=1 scripts/azure/github-oidc.sh    # preview
+scripts/azure/github-oidc.sh
+```
+
+This creates an Entra ID app registration that trusts **only this
+repository's `main` branch** (OIDC federated credential, no passwords or keys).
+It grants **AcrPush** on the registry and **Contributor** on the resource
+group, and stores `AZURE_CLIENT_ID`, `AZURE_TENANT_ID` and
+`AZURE_SUBSCRIPTION_ID` as repository secrets and the resource names as
+repository variables.
+
+Deploy: **Actions → Deploy → Run workflow** (branch `main`), or
+`gh workflow run deploy.yml --ref main`.
+
+`teardown.sh` also deletes the app registration. The repository secrets and
+variables can then be removed in the repository settings.
+
 ## Ending the deployment
 
 ```bash

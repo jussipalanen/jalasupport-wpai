@@ -1,0 +1,36 @@
+name: Lint
+
+# Lints the repository files that the language-specific CI jobs don't cover:
+# GitHub Actions workflows, shell scripts and the Dockerfile.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: lint-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  repository:
+    name: Workflows, shell scripts, Dockerfile
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: actionlint (workflows, including inline scripts)
+        run: docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:1.7.12 -color
+
+      - name: ShellCheck (shell scripts)
+        run: |
+          docker run --rm -v "$PWD:/mnt" -w /mnt koalaman/shellcheck:v0.11.0 -x \
+            dev scripts/azure/*.sh docker/php/*.sh
+
+      - name: Hadolint (Dockerfile)
+        run: |
+          docker run --rm -i -v "$PWD/.hadolint.yaml:/.config/hadolint.yaml:ro" \
+            hadolint/hadolint:v2.15.1 hadolint - < docker/php/Dockerfile
