@@ -5,20 +5,15 @@ declare(strict_types=1);
 namespace JalaSupport\Services\AI;
 
 use JalaSupport\Models\Ticket;
-use JalaSupport\Models\TicketCategory;
-use JalaSupport\Models\TicketPriority;
 use JalaSupport\Support\Logger;
 use WP_Error;
 
 /**
- * Azure OpenAI integration for ticket assistance.
+ * Azure OpenAI provider (chat completions with strict JSON schema output).
  *
- * - Authenticates with an API key or the App Service managed identity.
- * - Sends ticket content as JSON data (never as instructions) and requests
- *   strict structured JSON output.
- * - Validates the response and maps failures to safe WP_Error responses.
+ * Authenticates with an API key or the App Service managed identity.
  */
-class AzureOpenAIService
+class AzureOpenAIService extends AbstractAiProvider
 {
     private const COGNITIVE_SERVICES_SCOPE = 'https://cognitiveservices.azure.com';
 
@@ -32,47 +27,35 @@ class AzureOpenAIService
 
     public function __construct(
         private AzureOpenAIConfig $config,
-        private AiResponseParser $parser = new AiResponseParser(),
-    ) {}
+        AiResponseParser $parser = new AiResponseParser(),
+    ) {
+        parent::__construct($parser);
+    }
+
+    public function name(): string
+    {
+        return 'Azure OpenAI';
+    }
 
     public function isConfigured(): bool
     {
         return $this->config->isConfigured();
     }
 
-    /**
-     * Suggest category, priority, summary and a reply.
-     */
-    public function analyze(Ticket $ticket): TicketAnalysis|WP_Error
+    public function describe(): array
     {
-        return $this->complete(
-            $ticket,
-            'ticket-analysis',
-            ['category', 'priority', 'summary', 'suggested_reply'],
-        );
+        return [
+            __('Endpoint', 'jalasupport') => (string) wp_parse_url($this->config->endpoint, PHP_URL_HOST),
+            __('Deployment', 'jalasupport') => $this->config->deployment,
+            __('API version', 'jalasupport') => $this->config->apiVersion,
+            __('Authentication', 'jalasupport') => $this->config->useManagedIdentity
+                ? __('Managed identity (Microsoft Entra ID)', 'jalasupport')
+                : ($this->config->apiKey !== '' ? __('API key', 'jalasupport') : __('Not configured', 'jalasupport')),
+        ];
     }
 
-    /**
-     * Suggest a customer reply only.
-     */
-    public function suggestReply(Ticket $ticket): TicketAnalysis|WP_Error
+    protected function generate(Ticket $ticket, string $prompt, array $fields): string|WP_Error
     {
-        return $this->complete($ticket, 'suggest-reply', ['suggested_reply']);
-    }
-
-    /**
-     * @param  list<string>  $fields
-     */
-    private function complete(Ticket $ticket, string $prompt, array $fields): TicketAnalysis|WP_Error
-    {
-        if (! $this->isConfigured()) {
-            return new WP_Error(
-                'jalasupport_ai_unavailable',
-                __('AI assistance is not configured.', 'jalasupport'),
-                ['status' => 503],
-            );
-        }
-
         $headers = $this->authHeaders();
 
         if ($headers instanceof WP_Error) {
@@ -86,64 +69,21 @@ class AzureOpenAIService
             'data_format' => 'body',
         ]);
 
-        if (is_wp_error($response)) {
-            Logger::error('ai_request_failed', ['ticket_id' => $ticket->id, 'error' => $response->get_error_code()]);
+        $body = $this->decodeResponse($response, $ticket);
 
-            return $this->failure();
+        if ($body instanceof WP_Error) {
+            return $body;
         }
 
-        $status = (int) wp_remote_retrieve_response_code($response);
-
-        if ($status === 429) {
-            Logger::error('ai_rate_limited', ['ticket_id' => $ticket->id]);
-
-            return new WP_Error(
-                'jalasupport_ai_busy',
-                __('The AI service is busy. Please try again in a moment.', 'jalasupport'),
-                ['status' => 429],
-            );
-        }
-
-        if ($status < 200 || $status >= 300) {
-            Logger::error('ai_http_error', ['ticket_id' => $ticket->id, 'status' => $status]);
-
-            return $this->failure();
-        }
-
-        $body = json_decode((string) wp_remote_retrieve_body($response), true);
-        $choice = is_array($body) ? ($body['choices'][0] ?? null) : null;
+        $choice = $body['choices'][0] ?? null;
 
         if (($choice['finish_reason'] ?? null) === 'content_filter') {
-            return new WP_Error(
-                'jalasupport_ai_content_filtered',
-                __('The AI service could not process this ticket.', 'jalasupport'),
-                ['status' => 422],
-            );
+            return $this->contentFiltered();
         }
 
         $content = $choice['message']['content'] ?? null;
 
-        if (! is_string($content)) {
-            Logger::error('ai_invalid_response', ['ticket_id' => $ticket->id, 'reason' => 'missing_content']);
-
-            return new WP_Error(
-                'jalasupport_ai_invalid_response',
-                __('The AI service returned an invalid response. Please try again.', 'jalasupport'),
-                ['status' => 502],
-            );
-        }
-
-        $result = $this->parser->parse($content, $fields);
-
-        if ($result instanceof WP_Error) {
-            $data = $result->get_error_data();
-            Logger::error('ai_invalid_response', ['ticket_id' => $ticket->id, 'reason' => is_array($data) ? ($data['reason'] ?? null) : null]);
-
-            // Do not expose validation internals to the client.
-            return new WP_Error($result->get_error_code(), $result->get_error_message(), ['status' => 502]);
-        }
-
-        return $result;
+        return is_string($content) ? $content : $this->invalidResponse($ticket, 'missing_content');
     }
 
     /**
@@ -152,27 +92,10 @@ class AzureOpenAIService
      */
     public function requestBody(Ticket $ticket, string $prompt, array $fields): array
     {
-        $properties = [
-            'category' => ['type' => 'string', 'enum' => TicketCategory::values()],
-            'priority' => ['type' => 'string', 'enum' => TicketPriority::values()],
-            'summary' => ['type' => 'string'],
-            'suggested_reply' => ['type' => 'string'],
-        ];
-
-        // Ticket data is passed as a JSON document so it cannot break out of
-        // its role. Customer email is intentionally not sent.
-        $ticketData = [
-            'title' => $ticket->title,
-            'description' => $ticket->description,
-            'customer_name' => $ticket->customerName,
-            'current_category' => $ticket->category->value,
-            'current_priority' => $ticket->priority->value,
-        ];
-
         $body = [
             'messages' => [
-                ['role' => 'system', 'content' => $this->prompt($prompt)],
-                ['role' => 'user', 'content' => "Ticket data (JSON):\n" . wp_json_encode($ticketData, JSON_UNESCAPED_UNICODE)],
+                ['role' => 'system', 'content' => TicketPrompt::system($prompt)],
+                ['role' => 'user', 'content' => TicketPrompt::userMessage($ticket)],
             ],
             'temperature' => 0.2,
             'max_tokens' => 1000,
@@ -181,18 +104,13 @@ class AzureOpenAIService
                 'json_schema' => [
                     'name' => str_replace('-', '_', $prompt),
                     'strict' => true,
-                    'schema' => [
-                        'type' => 'object',
-                        'properties' => array_intersect_key($properties, array_flip($fields)),
-                        'required' => $fields,
-                        'additionalProperties' => false,
-                    ],
+                    'schema' => TicketPrompt::schema($fields),
                 ],
             ],
         ];
 
         /** Allows adjusting model parameters (not the prompt or ticket data) per deployment. */
-        return (array) apply_filters('jalasupport_ai_request_body', $body, $prompt);
+        return (array) apply_filters('jalasupport_ai_request_body', $body, $prompt, 'azure');
     }
 
     /**
@@ -249,21 +167,5 @@ class AzureOpenAIService
         $this->token = ['token' => $body['access_token'], 'expires' => (int) ($body['expires_on'] ?? 0)];
 
         return $body['access_token'];
-    }
-
-    private function prompt(string $name): string
-    {
-        $path = dirname(__DIR__, 3) . '/resources/prompts/' . basename($name) . '.txt';
-
-        return trim((string) file_get_contents($path));
-    }
-
-    private function failure(): WP_Error
-    {
-        return new WP_Error(
-            'jalasupport_ai_failed',
-            __('The AI service is currently unavailable. Please try again later.', 'jalasupport'),
-            ['status' => 502],
-        );
     }
 }

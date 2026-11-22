@@ -92,6 +92,8 @@ Edit `scripts/azure/config.env`:
 | `AZ_PREFIX` | Name prefix, 3-14 lowercase letters or digits |
 | `BUDGET_EMAIL` | **Set this.** Receives budget alerts |
 | `BUDGET_AMOUNT` | Monthly budget in your billing currency (default 5) |
+| `GEMINI_API_KEY` | Optional. Enables AI; stored as a Container Apps secret. Leave empty to deploy without AI |
+| `AI_PROVIDER`, `GEMINI_MODEL`, `AI_DAILY_LIMIT` | AI provider settings (defaults `gemini`, `gemini-flash-lite-latest`, `200`) |
 
 `config.env` and the generated `scripts/azure/.state.env` (database password,
 WordPress salts, name suffix) are git-ignored. Keep `.state.env` private, and
@@ -146,7 +148,14 @@ The script is safe to re-run: existing resources are kept and the app is updated
    Settings → Disable WordPress application passwords* = off.
 5. Create support agents: *Users → Add New*, role **Support Agent**.
 
-AI features stay disabled until an AI provider is configured; the app works
+**AI (optional):** with `GEMINI_API_KEY` set in `config.env`, AI is enabled
+when the app starts. Protect the key in Google Cloud: in *APIs & Services →
+Credentials*, restrict it to the **Generative Language API**, and keep separate
+keys for local development and Azure. Container Apps has no fixed outbound IP
+on the consumption plan, so an IP restriction isn't practical. The app also
+only lets its own UI use the AI, with a site-wide daily limit.
+
+Without a key, AI features stay disabled; the app works
 fully without them.
 
 ## Deploying code changes
@@ -183,7 +192,7 @@ subscription after 30 days and nothing is charged.
 
 ## Security notes
 
-- Secrets (database password, WordPress salts) are stored as Container Apps
+- Secrets (database password, WordPress salts, Gemini API key) are stored as Container Apps
   secrets, not as plain environment variables, and never in the image.
 - The database requires TLS (`DB_SSL=true`) and only accepts connections from
   Azure services. No public IP ranges are allowed except during a teardown

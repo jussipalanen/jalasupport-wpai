@@ -8,10 +8,10 @@ use JalaSupport\Fields\TicketFields;
 use JalaSupport\Http\Controllers\TicketAiController;
 use JalaSupport\Http\Controllers\TicketController;
 use JalaSupport\PostTypes\TicketPostType;
-use JalaSupport\Services\AI\AzureOpenAIConfig;
-use JalaSupport\Services\AI\AzureOpenAIService;
+use JalaSupport\Services\AI\AiProviderFactory;
 use JalaSupport\Services\TicketRepository;
 use JalaSupport\Services\TicketValidator;
+use JalaSupport\Support\AiAccessPolicy;
 use JalaSupport\Support\Installer;
 use JalaSupport\Support\RateLimiter;
 
@@ -32,11 +32,16 @@ final class Plugin
             (new TicketController($tickets, new TicketValidator()))->registerRoutes();
             (new TicketAiController(
                 $tickets,
-                new AzureOpenAIService(AzureOpenAIConfig::fromEnvironment()),
+                AiProviderFactory::fromEnvironment(),
                 new RateLimiter(
                     (int) apply_filters('jalasupport_ai_rate_limit', 20),
                     (int) apply_filters('jalasupport_ai_rate_window', 10 * MINUTE_IN_SECONDS),
                 ),
+                new RateLimiter(
+                    (int) apply_filters('jalasupport_ai_daily_limit', defined('AI_DAILY_LIMIT') ? (int) AI_DAILY_LIMIT : 200),
+                    DAY_IN_SECONDS,
+                ),
+                AiAccessPolicy::fromEnvironment(),
             ))->registerRoutes();
         });
     }

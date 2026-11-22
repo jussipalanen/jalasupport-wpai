@@ -78,7 +78,15 @@ if (! class_exists('WP_REST_Request')) {
          * @param  array<string, mixed>  $params  Route/query parameters.
          * @param  array<string, mixed>  $json  JSON body parameters.
          */
-        public function __construct(private array $params = [], private array $json = []) {}
+        /**
+         * @param  array<string, string>  $headers  Lower-case names with underscores, as WordPress normalizes them.
+         */
+        public function __construct(private array $params = [], private array $json = [], private array $headers = []) {}
+
+        public function get_header(string $key): ?string
+        {
+            return $this->headers[strtolower(str_replace('-', '_', $key))] ?? null;
+        }
 
         public function get_param(string $key): mixed
         {

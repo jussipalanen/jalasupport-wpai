@@ -180,6 +180,26 @@ APP_YAML="$(mktemp)"
 chmod 600 "$APP_YAML"
 trap 'rm -f "$APP_YAML"' EXIT
 
+ai_secrets=""
+ai_env=""
+if [ -n "${GEMINI_API_KEY:-}" ]; then
+    [[ "$GEMINI_API_KEY" =~ ^[A-Za-z0-9_-]{20,}$ ]] || fail "GEMINI_API_KEY has an unexpected format."
+    ai_secrets="            -   name: gemini-api-key
+                value: \"${GEMINI_API_KEY}\"
+"
+    ai_env="                    -   name: AI_PROVIDER
+                        value: \"${AI_PROVIDER:-gemini}\"
+                    -   name: GEMINI_API_KEY
+                        secretRef: gemini-api-key
+                    -   name: GEMINI_MODEL
+                        value: \"${GEMINI_MODEL:-gemini-flash-lite-latest}\"
+                    -   name: AI_DAILY_LIMIT
+                        value: \"${AI_DAILY_LIMIT:-200}\"
+"
+else
+    note "GEMINI_API_KEY is empty: deploying without AI features."
+fi
+
 salt_secrets=""
 salt_env=""
 for key in AUTH_KEY SECURE_AUTH_KEY LOGGED_IN_KEY NONCE_KEY AUTH_SALT SECURE_AUTH_SALT LOGGED_IN_SALT NONCE_SALT; do
@@ -214,7 +234,7 @@ properties:
         secrets:
             -   name: db-password
                 value: "${MYSQL_ADMIN_PASSWORD}"
-${salt_secrets}    template:
+${salt_secrets}${ai_secrets}    template:
         containers:
             -   name: app
                 image: ${IMAGE}
@@ -238,7 +258,7 @@ ${salt_secrets}    template:
                         secretRef: db-password
                     -   name: DB_SSL
                         value: "true"
-${salt_env}                volumeMounts:
+${salt_env}${ai_env}                volumeMounts:
                     -   volumeName: uploads
                         mountPath: /var/www/html/web/app/uploads
                     -   volumeName: wflogs
