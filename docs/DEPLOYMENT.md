@@ -51,6 +51,23 @@ Check the current free amounts on the
 [Azure free services page](https://azure.microsoft.com/en-ca/pricing/free-services)
 before you start. They are per subscription and can change.
 
+## Configuration files
+
+The deployment is defined in three files:
+
+| File | Content | In Git |
+|---|---|---|
+| [`infra/containerapp.yaml`](../infra/containerapp.yaml) | Container app definition: image, settings, secret references, volumes, health probes, scaling. A template with `${PLACEHOLDERS}`, no secrets | ✅ committed, reviewable in pull requests |
+| `scripts/azure/config.env` | Your settings: region, names, budget, AI (template: `config.example.env`) | ❌ git-ignored |
+| `scripts/azure/.state.env` | Generated values: name suffix, database password, WordPress salts | ❌ git-ignored, private |
+
+`setup.sh` renders the template with the settings and secrets into a private
+temporary file, applies it, and deletes it. Rendering fails on any unresolved
+placeholder. The AI block (between `# BEGIN optional: ai` and
+`# END optional: ai`) is included only when `GEMINI_API_KEY` is set.
+`scripts/azure/check-template.sh` checks the template offline and runs in the
+Lint workflow.
+
 ## Costs and the free account
 
 - **Days 1-30:** the free account has a $200 credit and a spending limit, so
@@ -142,8 +159,8 @@ The script asks for confirmation, then:
 5. Creates the container registry and a managed identity with `AcrPull`
 6. Builds the production image locally and pushes it to the registry
 7. Creates the Container Apps environment (logs off) and mounts the file shares
-8. Creates the container app with the database settings and salts as secrets,
-   `WP_HOME` set to its URL, and scale 0-1
+8. Renders `infra/containerapp.yaml` and creates or updates the container app
+   (database settings and salts as secrets, `WP_HOME` set to its URL, scale 0-1)
 
 The script is safe to re-run: existing resources are kept and the app is updated.
 

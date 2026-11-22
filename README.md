@@ -145,6 +145,7 @@ Key decisions:
 ├── config/                  Bedrock configuration (application.php + environments/)
 ├── docker/                  PHP/Apache image, PHP ini, entrypoint
 ├── docs/                    Additional documentation (API reference, Azure deployment)
+├── infra/                   Azure Container Apps definition (template, no secrets)
 ├── scripts/azure/           Azure free-tier setup, deploy and teardown scripts
 ├── dev                      Developer helper script (Docker Compose wrapper)
 ├── tests/                   Pest unit tests, Brain Monkey setup, WP stubs
@@ -584,7 +585,7 @@ Lightweight GitHub Actions checks run on every pull request and on `main`:
 | Workflow | Checks |
 |---|---|
 | [`CI`](.github/workflows/ci.yml) | **PHP 8.3 and 8.5:** `composer validate`, Pint, PHPStan, Pest · **Theme:** ESLint, build · **Editorconfig** |
-| [`Lint`](.github/workflows/lint.yml) | **actionlint** (workflows), **ShellCheck** (shell scripts), **Hadolint** (Dockerfile) |
+| [`Lint`](.github/workflows/lint.yml) | **actionlint** (workflows), **ShellCheck** (shell scripts), **Hadolint** (Dockerfile), container app template check (offline) |
 | [`Security`](.github/workflows/security.yml) | **`composer audit`** and **`npm audit`** (known vulnerabilities), **Gitleaks** (secrets in the full history). Also runs weekly |
 | [`Docker`](.github/workflows/docker.yml) | Production image build and smoke test (when Docker-related files change) |
 | [`Deploy`](.github/workflows/deploy.yml) | **Manual:** build, push to Azure Container Registry, roll out to Container Apps (OIDC, no stored passwords). See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) |
