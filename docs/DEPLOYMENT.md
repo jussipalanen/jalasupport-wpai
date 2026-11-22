@@ -7,6 +7,18 @@ services. Everything is created in one resource group by
 The scripts never run on their own. You run them, and you can preview every
 command first with `DRY_RUN=1`.
 
+Every script is also available through the developer helper:
+
+| `./dev` command | Script |
+|---|---|
+| `./dev azure setup` | `scripts/azure/setup.sh` |
+| `./dev azure deploy` | `scripts/azure/deploy.sh` |
+| `./dev azure status` | `scripts/azure/status.sh`: URL, revision, replicas, database (read-only; `--health` also requests the health endpoint and wakes the app) |
+| `./dev azure github-oidc` | `scripts/azure/github-oidc.sh` |
+| `./dev azure teardown` | `scripts/azure/teardown.sh` |
+
+For example: `DRY_RUN=1 ./dev azure setup`.
+
 ## Architecture
 
 ```text

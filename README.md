@@ -241,6 +241,7 @@ Run `./dev help` for the full list.
 | `./dev assets` | `npm install` (root tooling and theme) + theme `npm run build` |
 | `./dev vite` | Vite dev server for the theme |
 | `./dev prod [up\|down\|logs]` | Build and run the **production image** on <http://localhost:8090> against the local database |
+| `./dev azure setup\|deploy\|status\|github-oidc\|teardown` | Manual Azure deployment (wrappers for `scripts/azure/*.sh`; prefix with `DRY_RUN=1` to preview) |
 
 **Database and WP-CLI examples**
 
@@ -469,10 +470,11 @@ to never re-check files. Uploads and Wordfence data are mounted from Azure Files
 ```bash
 cp scripts/azure/config.example.env scripts/azure/config.env   # set BUDGET_EMAIL
 az login
-DRY_RUN=1 scripts/azure/setup.sh    # preview, changes nothing
-scripts/azure/setup.sh              # create the deployment
-scripts/azure/deploy.sh             # ship code changes later
-scripts/azure/teardown.sh           # delete everything (BACKUP=1 to export first)
+DRY_RUN=1 ./dev azure setup    # preview, changes nothing
+./dev azure setup              # create the deployment
+./dev azure status             # URL, revision, replicas, database (read-only)
+./dev azure deploy             # ship code changes later
+./dev azure teardown           # delete everything (BACKUP=1 to export first)
 ```
 
 Scaling to zero means a few-second cold start after idle periods. A budget
