@@ -66,7 +66,7 @@ rather than a traditional website:
 | 🗂️ | Ticket metadata with ACF: status, priority, category, customer, AI fields | ✅ |
 | 🔌 | REST API `jalasupport/v1`: list, search, filter, sort, paginate, CRUD, stats | ✅ |
 | ✅ | Server-side validation and sanitization, consistent JSON responses | ✅ |
-| 🤖 | Azure OpenAI ticket analysis API (category, priority, summary, suggested reply) | ✅ |
+| 🤖 | AI ticket analysis (category, priority, summary, suggested reply) with **Google Gemini** (free tier) or **Azure OpenAI** | ✅ |
 | 🖥️ | SaaS-style UI (Blade + Tailwind + Alpine.js): dashboard, ticket list, ticket details, create ticket, settings | ✅ |
 | ✨ | AI panel with accept / edit / reject for every suggestion | ✅ |
 | ☁️ | Azure free-tier deployment (Container Apps + MySQL Flexible Server), scripted | ✅ ready to run |
@@ -92,7 +92,7 @@ rather than a traditional website:
 | Data | MySQL 8.4, WordPress posts + post meta, Advanced Custom Fields 6 |
 | Security | Wordfence (free), dedicated capabilities, REST permission checks |
 | Frontend | Roots Sage 11, Blade templates and components, Tailwind CSS 4, Alpine.js 3, Vite 8 |
-| AI | Azure OpenAI (server-side PHP, structured JSON output) |
+| AI | Google Gemini (Gemini Developer API) or Azure OpenAI, server-side PHP, structured JSON output |
 | Infrastructure | Docker, Docker Compose, Azure Container Apps (free tier; App Service as the always-on option), Azure Database for MySQL Flexible Server, Azure Container Registry, Azure Files |
 | Quality | Pest 4, Brain Monkey, Laravel Pint, PHPStan, ESLint, editorconfig-checker, GitHub Actions |
 
@@ -112,7 +112,7 @@ rather than a traditional website:
         ▼
  jalasupport plugin
    ├─ Http/Controllers   permission checks, request → response
-   ├─ Services           TicketValidator, TicketRepository, AI/AzureOpenAIService
+   ├─ Services           TicketValidator, TicketRepository, AI/ (Gemini, Azure OpenAI)
    ├─ Models             Ticket, status/priority/category enums
    ├─ PostTypes, Fields  ticket CPT, post meta + ACF field group
    └─ Support            capabilities, roles, installer
@@ -350,7 +350,13 @@ Service settings in Azure). **Never commit `.env`.**
 | `WP_ENV` | `development`, `staging` or `production` |
 | `WP_HOME`, `WP_SITEURL` | Site URLs (`WP_SITEURL` = `${WP_HOME}/wp`) |
 | `AUTH_KEY` … `NONCE_SALT` | WordPress salts |
-| `AZURE_OPENAI_ENDPOINT` | `https://<resource>.openai.azure.com` (AI is disabled until configured) |
+| `AI_PROVIDER` | `gemini`, `azure`, or empty for the first configured provider. AI is disabled until a provider is configured |
+| `GEMINI_API_KEY` | Key from [Google AI Studio](https://aistudio.google.com/apikey). Free-tier keys: Google may use submitted content, so use test data only |
+| `GEMINI_MODEL`, `GEMINI_FALLBACK_MODEL` | Free-tier Flash models; defaults `gemini-flash-lite-latest` and `gemini-flash-latest` (fallback on timeout, overload or quota; `none` disables it) |
+| `GEMINI_TIMEOUT` | Seconds per Gemini attempt (default 20) |
+| `AI_ALLOW_API_CLIENTS` | `true` lets application-password API clients use the AI. Default: only this site's own UI |
+| `AI_DAILY_LIMIT` | Site-wide AI requests per day (default 200) |
+| `AZURE_OPENAI_ENDPOINT` | `https://<resource>.openai.azure.com` |
 | `AZURE_OPENAI_DEPLOYMENT` | Chat model deployment name (a model that supports structured outputs, e.g. GPT-4o / GPT-4o mini) |
 | `AZURE_OPENAI_API_KEY` | API key. Leave empty when using a managed identity |
 | `AZURE_OPENAI_USE_MANAGED_IDENTITY` | `true` to authenticate with the App Service managed identity (Entra ID) |
@@ -487,6 +493,10 @@ alert notifies you of costs but doesn't stop them.
   reveal whether a ticket exists to unauthorized users.
 - All input is validated and sanitized on the server. Registered post meta
   sanitizes values a second time.
+- **Only this site's own UI can use the AI:** browser session plus nonce from
+  the same origin. Cross-site requests and API clients are refused unless
+  `AI_ALLOW_API_CLIENTS=true`. A per-user and a site-wide daily limit protect
+  the provider quota.
 - Secrets live only in environment variables. Azure credentials stay server-side
   and are never sent to JavaScript.
 - Ticket content is treated as untrusted input to the AI. AI output is validated

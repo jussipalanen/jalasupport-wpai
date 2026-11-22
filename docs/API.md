@@ -125,7 +125,8 @@ Moves the ticket to the trash (recoverable in wp-admin). Administrators only.
 
 ### `POST /tickets/{id}/ai/analyze`
 
-Asks Azure OpenAI for suggestions. **Nothing is saved.** To accept a
+Asks the configured AI provider (Google Gemini or Azure OpenAI, see
+`AI_PROVIDER`) for suggestions. **Nothing is saved.** To accept a
 suggestion, the client sends a regular `PATCH /tickets/{id}` (for example
 `{"category": "billing", "ai_summary": "..."}`) after the user confirms it.
 
@@ -150,22 +151,35 @@ suggestion, the client sends a regular `PATCH /tickets/{id}` (for example
 
 Same as above but only returns `suggestions.suggested_reply`.
 
-**AI permissions and errors.** AI endpoints require `edit_post` on the ticket
-and are rate limited per user (20 requests per 10 minutes by default; filters
-`jalasupport_ai_rate_limit` and `jalasupport_ai_rate_window`).
+**AI access, limits and errors.**
+
+- **Only this site's own UI can use the AI.** The AI endpoints accept browser
+  sessions (cookie plus `X-WP-Nonce`) from the same origin. Requests from other
+  origins, requests marked cross-site by the browser, and application-password
+  API clients are refused with `403`. Set `AI_ALLOW_API_CLIENTS=true` to allow
+  API clients.
+- Each request requires `edit_post` on the ticket.
+- Per-user limit: 20 requests per 10 minutes (filters
+  `jalasupport_ai_rate_limit`, `jalasupport_ai_rate_window`).
+- Site-wide limit: `AI_DAILY_LIMIT` requests per day, default 200 (filter
+  `jalasupport_ai_daily_limit`).
 
 | Status | Code | Meaning |
 |---|---|---|
-| 422 | `jalasupport_ai_content_filtered` | Blocked by Azure content filtering |
+| 403 | `jalasupport_ai_forbidden` | Not from this site's UI (cross-origin, cross-site, or an API client) |
+| 422 | `jalasupport_ai_content_filtered` | Blocked by the provider's safety filters |
 | 429 | `jalasupport_ai_rate_limited` | Per-user limit reached |
-| 429 | `jalasupport_ai_busy` | Azure OpenAI throttled the request |
-| 502 | `jalasupport_ai_failed` | Network or authentication error, or an Azure error |
+| 429 | `jalasupport_ai_daily_limit` | Site-wide daily limit reached |
+| 429 / 503 | `jalasupport_ai_busy` | Provider quota exhausted or model overloaded (Gemini first retries once with the fallback model) |
+| 502 | `jalasupport_ai_failed` | Network or authentication error, timeout, or another provider error |
 | 502 | `jalasupport_ai_invalid_response` | The model output failed validation |
 | 503 | `jalasupport_ai_unavailable` | AI is not configured |
 
 **How the AI integration is protected**
 
-- Credentials stay on the server (API key or managed identity token) and are never sent to the browser.
+- Credentials stay on the server (API keys or a managed identity token) and are
+  never sent to the browser. The Gemini key is sent in the `x-goog-api-key`
+  header, never in URLs.
 - The system prompts are version-controlled in `web/app/plugins/jalasupport/resources/prompts/`.
 - Ticket content is sent as a JSON document in the user message, and the system
   prompt tells the model to treat it as data. Instructions inside a ticket cannot

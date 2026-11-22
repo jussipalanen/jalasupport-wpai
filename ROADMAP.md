@@ -20,7 +20,9 @@ reviewable increments.
 ## Phase 3 — AI assistance
 
 - [x] `AzureOpenAIService` with structured JSON responses and validation
-- [x] Analyze and suggest-reply endpoints (suggestions require user confirmation)
+- [x] Analyze and suggest-reply endpoints
+- [x] Google Gemini provider (free tier) with fallback model, selectable via `AI_PROVIDER`
+- [x] AI access policy: own UI only by default, site-wide daily limit (suggestions require user confirmation)
 
 ## Phase 4 — Application UI
 

@@ -50,6 +50,7 @@ React may be introduced for specific complex interactive components when there i
 ### AI
 
 - Azure OpenAI
+- Google Gemini (Gemini Developer API) as an alternative provider, selected with `AI_PROVIDER`
 - Server-side PHP integration
 - Structured JSON responses
 - Secure API authentication
