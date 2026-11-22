@@ -141,6 +141,10 @@ COPY docker/php/conf.d-production/ /usr/local/etc/php/conf.d/
 COPY --from=build /var/www/html /var/www/html
 COPY --from=assets /app/web/app/themes/jalasupport/public/build /var/www/html/web/app/themes/jalasupport/public/build
 
+# Helpers for `./dev azure wp` and `./dev azure shell` (az containerapp exec).
+COPY --chmod=755 docker/php/jalasupport-wp.sh /usr/local/bin/jalasupport-wp
+COPY --chmod=755 docker/php/jalasupport-shell.sh /usr/local/bin/jalasupport-shell
+
 # Writable runtime directories, plus a static health check endpoint that does
 # not load WordPress or touch the database.
 RUN mkdir -p web/app/uploads web/app/wflogs web/app/cache \
