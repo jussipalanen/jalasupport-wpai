@@ -145,6 +145,15 @@ Config::define('NONCE_SALT', env('NONCE_SALT'));
 Config::define('AI_PROVIDER', env('AI_PROVIDER') ?: '');
 
 /**
+ * JalaSupport: AI access. By default the AI endpoints only accept requests
+ * from this site's own UI (cookie session + REST nonce, same origin); set
+ * AI_ALLOW_API_CLIENTS=true to also allow application-password API clients.
+ * AI_DAILY_LIMIT caps AI requests per day for the whole site.
+ */
+Config::define('AI_ALLOW_API_CLIENTS', (bool) env('AI_ALLOW_API_CLIENTS'));
+Config::define('AI_DAILY_LIMIT', (int) (env('AI_DAILY_LIMIT') ?: 200));
+
+/**
  * JalaSupport: Google Gemini (Gemini Developer API, key from Google AI Studio).
  * Free-tier keys: Google may use submitted content to improve its products.
  */

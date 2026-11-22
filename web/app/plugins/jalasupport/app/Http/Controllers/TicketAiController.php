@@ -7,6 +7,7 @@ namespace JalaSupport\Http\Controllers;
 use JalaSupport\Services\AI\AiProvider;
 use JalaSupport\Services\AI\TicketAnalysis;
 use JalaSupport\Services\TicketRepository;
+use JalaSupport\Support\AiAccessPolicy;
 use JalaSupport\Support\RateLimiter;
 use WP_Error;
 use WP_REST_Request;
@@ -23,6 +24,8 @@ final class TicketAiController extends Controller
         TicketRepository $tickets,
         private AiProvider $ai,
         private RateLimiter $limiter,
+        private ?RateLimiter $siteLimiter = null,
+        private ?AiAccessPolicy $policy = null,
     ) {
         parent::__construct($tickets);
     }
@@ -44,7 +47,13 @@ final class TicketAiController extends Controller
      */
     public function canUseAi(WP_REST_Request $request): bool|WP_Error
     {
-        return $this->authorizeTicket($request, 'edit_post');
+        $allowed = $this->authorizeTicket($request, 'edit_post');
+
+        if ($allowed !== true || $this->policy === null) {
+            return $allowed;
+        }
+
+        return $this->policy->check($request);
     }
 
     public function analyze(WP_REST_Request $request): WP_REST_Response|WP_Error
@@ -76,6 +85,15 @@ final class TicketAiController extends Controller
             return new WP_Error(
                 'jalasupport_ai_rate_limited',
                 __('Too many AI requests. Please wait a few minutes and try again.', 'jalasupport'),
+                ['status' => 429],
+            );
+        }
+
+        // Site-wide daily cap protects the provider quota and costs.
+        if ($this->siteLimiter !== null && ! $this->siteLimiter->attempt('ai:site')) {
+            return new WP_Error(
+                'jalasupport_ai_daily_limit',
+                __('The daily AI limit for this site has been reached. Please try again tomorrow.', 'jalasupport'),
                 ['status' => 429],
             );
         }

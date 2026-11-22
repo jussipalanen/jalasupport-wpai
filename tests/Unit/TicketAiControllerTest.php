@@ -6,6 +6,7 @@ use JalaSupport\Models\Ticket;
 use JalaSupport\Services\AI\AiProvider;
 use JalaSupport\Services\AI\TicketAnalysis;
 use JalaSupport\Services\TicketRepository;
+use JalaSupport\Support\AiAccessPolicy;
 use JalaSupport\Support\RateLimiter;
 
 beforeEach(function () {
@@ -64,4 +65,28 @@ it('rate limits AI requests per user', function () {
 
     expect($third->get_error_code())->toBe('jalasupport_ai_rate_limited')
         ->and($third->get_error_data()['status'])->toBe(429);
+});
+
+it('enforces the site-wide daily limit', function () {
+    $controller = new TicketAiController($this->repository, $this->ai, new RateLimiter(100, 600), new RateLimiter(1, 86400));
+    $this->ai->shouldReceive('isConfigured')->andReturnTrue();
+    $this->ai->shouldReceive('suggestReply')->once()->andReturn(new TicketAnalysis(null, null, '', 'Reply'));
+
+    $controller->suggestReply($this->request);
+    $second = $controller->suggestReply($this->request);
+
+    expect($second->get_error_code())->toBe('jalasupport_ai_daily_limit')
+        ->and($second->get_error_data()['status'])->toBe(429);
+});
+
+it('applies the access policy after the capability check', function () {
+    Functions\when('is_user_logged_in')->justReturn(true);
+    Functions\when('current_user_can')->justReturn(true);
+    Functions\when('wp_parse_url')->alias(fn($url) => parse_url($url));
+    Functions\when('rest_get_authenticated_app_password')->justReturn(null);
+    $controller = new TicketAiController($this->repository, $this->ai, new RateLimiter(2, 600), null, new AiAccessPolicy('https://support.example.com'));
+
+    expect($controller->canUseAi(new WP_REST_Request(['id' => 3], [], ['origin' => 'https://support.example.com'])))->toBeTrue()
+        ->and($controller->canUseAi(new WP_REST_Request(['id' => 3], [], ['origin' => 'https://evil.example']))->get_error_code())
+        ->toBe('jalasupport_ai_forbidden');
 });
