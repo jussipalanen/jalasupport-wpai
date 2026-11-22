@@ -243,6 +243,7 @@ Run `./dev help` for the full list.
 | `./dev vite` | Vite dev server for the theme |
 | `./dev prod [up\|down\|logs]` | Build and run the **production image** on <http://localhost:8090> against the local database |
 | `./dev azure setup\|deploy\|status\|github-oidc\|teardown` | Manual Azure deployment (wrappers for `scripts/azure/*.sh`; prefix with `DRY_RUN=1` to preview) |
+| `./dev azure wp <args>` / `./dev azure shell` | WP-CLI or a shell (as www-data) inside the running Azure container, via your `az login` |
 
 **Database and WP-CLI examples**
 
