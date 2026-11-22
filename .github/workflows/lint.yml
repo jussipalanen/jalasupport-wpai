@@ -30,6 +30,9 @@ jobs:
           docker run --rm -v "$PWD:/mnt" -w /mnt koalaman/shellcheck:v0.11.0 -x \
             dev scripts/azure/*.sh docker/php/*.sh
 
+      - name: Container app template (render and validate, offline)
+        run: scripts/azure/check-template.sh
+
       - name: Hadolint (Dockerfile)
         run: |
           docker run --rm -i -v "$PWD/.hadolint.yaml:/.config/hadolint.yaml:ro" \
