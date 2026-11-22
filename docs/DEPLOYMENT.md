@@ -15,6 +15,7 @@ Every script is also available through the developer helper:
 | `./dev azure deploy` | `scripts/azure/deploy.sh` |
 | `./dev azure status` | `scripts/azure/status.sh`: URL, revision, replicas, database (read-only; `--health` also requests the health endpoint and wakes the app) |
 | `./dev azure github-oidc` | `scripts/azure/github-oidc.sh` |
+| `./dev azure shell` / `./dev azure wp <args>` | `scripts/azure/exec.sh`: shell or WP-CLI inside the running container (see *WP-CLI and shell on Azure*) |
 | `./dev azure teardown` | `scripts/azure/teardown.sh` |
 
 For example: `DRY_RUN=1 ./dev azure setup`.
@@ -223,6 +224,44 @@ Deploy: **Actions → Deploy → Run workflow** (branch `main`), or
 
 `teardown.sh` also deletes the app registration. The repository secrets and
 variables can then be removed in the repository settings.
+
+## WP-CLI and shell on Azure
+
+```bash
+./dev azure wp plugin list                 # WP-CLI as www-data
+./dev azure wp user list --role=jalasupport_agent
+./dev azure wp option get blogname
+./dev azure shell                          # interactive shell as www-data
+./dev azure shell --root                   # root shell (only when really needed)
+```
+
+The command wakes the app (it scales to zero), waits for a running replica,
+then opens `az containerapp exec`. The session is interactive; an idle
+replica may be stopped after a few minutes, which ends it.
+
+The helpers (`jalasupport-wp`, `jalasupport-shell`) are part of the production
+image. After updating to a version that includes them, run
+`./dev azure deploy` once.
+
+**Security**
+
+- **Your Azure login is the credential.** `az containerapp exec` uses your
+  `az login` session to get a **short-lived exec token for this container app
+  only**. It's sent over an encrypted `wss://` connection; the scripts never
+  store or print it.
+- **Only people with Azure rights on the app** (e.g. Contributor on the
+  resource group) can open a session. MFA and conditional access from
+  Entra ID apply.
+- **No extra exposure:** sessions go through Azure's management proxy, and
+  the app opens no SSH or other port.
+- **Least privilege:** WP-CLI and the default shell run as `www-data`; a root
+  shell needs `--root` explicitly.
+- **No shell injection:** WP-CLI arguments are sent as one base64 token and
+  become exact arguments inside the container, without being parsed by a
+  remote shell. Arguments with spaces and quotes work as typed.
+- **Don't pass secrets as arguments.** Commands are visible to Azure's exec
+  endpoint and in your local shell history. Use WP-CLI's prompts instead, e.g.
+  `./dev azure wp user create agent agent@example.com --role=jalasupport_agent --prompt=user_pass`.
 
 ## Ending the deployment
 
