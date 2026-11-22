@@ -40,7 +40,8 @@ reviewable increments.
 - [x] Deployment documentation (`docs/DEPLOYMENT.md`)
 - [ ] First deployment to Azure (run `scripts/azure/setup.sh`)
 - [ ] Dedicated least-privilege database user for the app
-- [ ] Optional: GitHub Actions deploy with OIDC
+- [x] GitHub Actions deploy workflow with OIDC (manual trigger; setup: `scripts/azure/github-oidc.sh`)
+- [x] CI hardening: Lint (actionlint, ShellCheck, Hadolint), Security (composer/npm audit, Gitleaks), Dependabot
 - [ ] Wordfence in production: Extended Protection firewall (`auto_prepend_file`) and persistent `wflogs` storage
 
 ## Phase 6 — MCP integration (post-MVP)

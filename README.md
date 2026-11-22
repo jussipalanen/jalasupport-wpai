@@ -577,18 +577,26 @@ managed identity) and AI rate limiting.
 
 <br>
 
-Every pull request runs the lightweight checks in
-[`.github/workflows/ci.yml`](.github/workflows/ci.yml):
+Lightweight GitHub Actions checks run on every pull request and on `main`:
 
-- **PHP 8.3 and 8.5:** `composer validate`, Pint code style, PHPStan static analysis, Pest unit tests (the minimum supported version and the Docker runtime)
-- **Theme:** ESLint and `npm run build`
-- **Editorconfig:** indentation and whitespace rules for every file
+| Workflow | Checks |
+|---|---|
+| [`CI`](.github/workflows/ci.yml) | **PHP 8.3 and 8.5:** `composer validate`, Pint, PHPStan, Pest · **Theme:** ESLint, build · **Editorconfig** |
+| [`Lint`](.github/workflows/lint.yml) | **actionlint** (workflows), **ShellCheck** (shell scripts), **Hadolint** (Dockerfile) |
+| [`Security`](.github/workflows/security.yml) | **`composer audit`** and **`npm audit`** (known vulnerabilities), **Gitleaks** (secrets in the full history). Also runs weekly |
+| [`Docker`](.github/workflows/docker.yml) | Production image build and smoke test (when Docker-related files change) |
+| [`Deploy`](.github/workflows/deploy.yml) | **Manual:** build, push to Azure Container Registry, roll out to Container Apps (OIDC, no stored passwords). See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) |
+
+**Dependabot** ([`.github/dependabot.yml`](.github/dependabot.yml)) opens weekly
+update pull requests for Composer, npm and GitHub Actions, with minor and patch
+updates grouped and majors separate. Dependabot alerts and security updates
+are enabled for the repository.
 
 Passing checks are a prerequisite for human review, not a replacement for it.
 The [PR template](.github/pull_request_template.md) contains a review checklist,
-and [`CODEOWNERS`](.github/CODEOWNERS) requests a review from the code owner. To
-enforce both, enable branch protection on `main`: require the *PHP*, *Theme* and
-*Editorconfig* status checks and a pull request review.
+and [`CODEOWNERS`](.github/CODEOWNERS) requests a review from the code owner.
+Required status checks (branch protection) need GitHub Pro or a public
+repository; until then, keep checks green before merging.
 
 Branch naming: `feature/…`, `fix/…`, `chore/…`.
 
