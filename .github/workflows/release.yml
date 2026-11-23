@@ -1,0 +1,49 @@
+name: Release
+
+# Publishes a GitHub release when a version tag (plain x.y.z, e.g. 0.1.0) is
+# pushed, normally with ./dev release tag <x.y.z>. The release notes are the
+# version's section of CHANGELOG.md. Nothing is deployed: Azure deployment
+# stays manual (./dev azure deploy or the Deploy workflow).
+on:
+  push:
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    name: GitHub release
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Verify the tag
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          [[ "$TAG" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]] \
+            || { echo "::error::Tag '$TAG' is not x.y.z."; exit 1; }
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main \
+            || { echo "::error::Tag $TAG does not point to a commit on main."; exit 1; }
+          scripts/release.sh check "$TAG"
+
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          scripts/release.sh notes "$TAG" > "$RUNNER_TEMP/notes.md"
+          gh release create "$TAG" --verify-tag \
+            --title "JalaSupport AI $TAG" \
+            --notes-file "$RUNNER_TEMP/notes.md"

@@ -28,7 +28,10 @@ jobs:
       - name: ShellCheck (shell scripts)
         run: |
           docker run --rm -v "$PWD:/mnt" -w /mnt koalaman/shellcheck:v0.11.0 -x \
-            dev scripts/azure/*.sh docker/php/*.sh
+            dev scripts/*.sh scripts/azure/*.sh docker/php/*.sh
+
+      - name: Release metadata (changelog and version headers agree)
+        run: scripts/release.sh check
 
       - name: Container app template (render and validate, offline)
         run: scripts/azure/check-template.sh

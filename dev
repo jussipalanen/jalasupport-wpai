@@ -72,6 +72,12 @@ Azure (manual, nothing runs automatically; see docs/DEPLOYMENT.md)
     azure wp <args>   WP-CLI in the Azure container, e.g. ./dev azure wp plugin list
     azure teardown    Delete the whole deployment (BACKUP=1 exports data first)
     Preview any of them without changes: DRY_RUN=1 ./dev azure setup
+
+Releases (x.y.z tags, notes from CHANGELOG.md; see README.md#releasing)
+    release prepare <x.y.z>  Bump versions and date the changelog on a release branch
+    release tag <x.y.z>      Tag main and push it; the Release workflow publishes it
+    release check [x.y.z]    Verify that the changelog and version headers agree
+    release notes <x.y.z>    Print the release notes of a version
 EOF
 }
 
@@ -224,6 +230,9 @@ case "$command" in
                 exit 1
                 ;;
         esac
+        ;;
+    release)
+        exec scripts/release.sh "$@"
         ;;
     help | -h | --help)
         usage
