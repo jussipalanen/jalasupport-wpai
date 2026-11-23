@@ -18,6 +18,8 @@ Releases are tagged on GitHub as plain `x.y.z` (for example `0.1.0`); see
   and skip tickets imported before; `--dry-run` previews.
 - `SECURITY.md` with private vulnerability reporting, and README notes on the
   repository rules for the now public repository.
+- README logo (`docs/images/logo.svg`): the JS icon with a support headset on
+  the dark purple circle of the favicon.
 
 ### Fixed
 
