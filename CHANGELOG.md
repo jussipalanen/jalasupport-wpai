@@ -9,6 +9,11 @@ Releases are tagged on GitHub as plain `x.y.z` (for example `0.1.0`); see
 
 ## [Unreleased]
 
+### Fixed
+
+- README release badge shows the current version (the dynamic badge cannot
+  read a private repository); `./dev release` keeps it in sync.
+
 ## [0.1.0] - 2026-11-23
 
 First release: the MVP support ticket application, local development
