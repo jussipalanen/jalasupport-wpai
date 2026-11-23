@@ -217,6 +217,46 @@ cd web/app/themes/jalasupport && npm install && npm run build
 
 </details>
 
+<a name="demo-wordpress-playground"></a>
+<details>
+<summary><b>▶️ Demo (WordPress Playground)</b></summary>
+
+<br>
+
+A self-contained demo that runs WordPress entirely in the browser
+([WordPress Playground](https://wordpress.org/playground/): PHP compiled to
+WebAssembly, SQLite instead of MySQL). Nothing is shared between visitors and
+everything resets when the tab or server closes, so it costs nothing and needs
+no Azure, database server or API key.
+
+```bash
+./dev demo          # build the bundle and open http://127.0.0.1:9400 (Ctrl+C stops it)
+./dev demo build    # only build build/playground/jalasupport-playground.zip
+```
+
+**Requirements:** PHP 8.3+, Composer 2, Node.js 20.18+ with the theme's npm
+dependencies (`./dev assets`) and Python 3. Docker is not needed. The first run
+downloads the Playground CLI (`@wp-playground/cli`) with `npx`.
+
+What the demo contains (`demo/playground/blueprint.json`):
+
+- The plugin and the theme (with Acorn and production assets), plus ACF from wordpress.org.
+- 10 fictional sample tickets (`demo/playground/tickets.json`; customers named
+  *Firstname Tester* with `@example.local` addresses), imported with
+  `wp jalasupport tickets import`.
+- **Demo AI** (`AI_PROVIDER=demo`): keyword rules suggest the category,
+  priority, summary and reply, labelled *[Demo]*. No AI service is called.
+- **Demo mode** (`JALASUPPORT_DEMO=true`): visitors are signed in as the
+  *Demo Tester* support agent (`demo` / `demo`, shown on the login screen) and
+  cannot open wp-admin. The administrator gets a random password, so the
+  Playground default `admin` / `password` does not work.
+
+Playground runs PHP with the `cli` SAPI, so a small must-use plugin
+(`demo/playground/jalasupport-playground.php`) tells Acorn that page requests
+are web requests. It is only installed in the demo.
+
+</details>
+
 <details>
 <summary><b>🛠️ Developer commands (<code>./dev</code>)</b></summary>
 
@@ -251,6 +291,7 @@ Run `./dev help` for the full list.
 | `./dev azure wp <args>` / `./dev azure shell` | WP-CLI or a shell (as www-data) inside the running Azure container, via your `az login` |
 | `./dev azure export-tickets` / `./dev azure import-tickets <file> --author=<login>` | Copy tickets from or to Azure (see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md#copying-tickets-local-and-azure)) |
 | `./dev release prepare\|tag\|check\|notes <x.y.z>` | Prepare, tag and verify releases (see [Releasing](#releasing)) |
+| `./dev demo` / `./dev demo build` | Run the WordPress Playground demo locally, or only build its bundle (see [Demo](#demo-wordpress-playground)) |
 
 **Database and WP-CLI examples**
 
@@ -360,7 +401,8 @@ Service settings in Azure). **Never commit `.env`.**
 | `WP_ENV` | `development`, `staging` or `production` |
 | `WP_HOME`, `WP_SITEURL` | Site URLs (`WP_SITEURL` = `${WP_HOME}/wp`) |
 | `AUTH_KEY` … `NONCE_SALT` | WordPress salts |
-| `AI_PROVIDER` | `gemini`, `azure`, or empty for the first configured provider. AI is disabled until a provider is configured |
+| `AI_PROVIDER` | `gemini`, `azure`, `demo` (sample answers from keyword rules, no AI service), or empty for the first configured provider. AI is disabled until a provider is configured |
+| `JALASUPPORT_DEMO` | `true` for public demos: only administrators can open wp-admin; other users stay in the app. With `JALASUPPORT_DEMO_LOGIN` and `JALASUPPORT_DEMO_PASSWORD` (constants) the login screen shows the demo account |
 | `GEMINI_API_KEY` | Key from [Google AI Studio](https://aistudio.google.com/apikey). Free-tier keys: Google may use submitted content, so use test data only |
 | `GEMINI_MODEL`, `GEMINI_FALLBACK_MODEL` | Free-tier Flash models; defaults `gemini-flash-lite-latest` and `gemini-flash-latest` (fallback on timeout, overload or quota; `none` disables it) |
 | `GEMINI_TIMEOUT` | Seconds per Gemini attempt (default 20) |

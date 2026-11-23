@@ -20,6 +20,15 @@ Releases are tagged on GitHub as plain `x.y.z` (for example `0.1.0`); see
   repository rules for the now public repository.
 - README logo (`docs/images/logo.svg`): the JS icon with a support headset on
   the dark purple circle of the favicon.
+- **WordPress Playground demo** (`./dev demo`): the app running in the
+  browser with SQLite, 10 fictional sample tickets and a demo agent account;
+  `scripts/playground.sh` builds the bundle (plugin, theme with Acorn,
+  blueprint).
+- `AI_PROVIDER=demo`: sample AI answers from keyword rules, without an AI
+  service or API key.
+- `JALASUPPORT_DEMO=true`: demo mode; only administrators can open wp-admin,
+  other users are sent to the app (also after login), and the login screen
+  can show the demo account.
 
 ### Fixed
 
