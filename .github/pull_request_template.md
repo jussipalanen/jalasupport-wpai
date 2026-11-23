@@ -23,4 +23,5 @@ The reviewer confirms:
 - [ ] No secrets, credentials or `.env` files are committed
 - [ ] Tests were added or updated for business logic and permissions
 - [ ] Documentation (README / ROADMAP / docs) is updated where needed
+- [ ] `CHANGELOG.md` has an entry under `[Unreleased]` for user-facing changes
 - [ ] The change was run locally and behaves as described

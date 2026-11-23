@@ -5,6 +5,7 @@
 **An AI-assisted customer support and ticket management mini-project built on WordPress and the Roots ecosystem.**
 
 [![CI](https://github.com/jussipalanen/jalasupport-wpai/actions/workflows/ci.yml/badge.svg)](https://github.com/jussipalanen/jalasupport-wpai/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/jussipalanen/jalasupport-wpai?label=release&color=6d28d9)](CHANGELOG.md)
 
 ![PHP](https://img.shields.io/badge/PHP-8.3%2B-777BB4?logo=php&logoColor=white)
 ![WordPress](https://img.shields.io/badge/WordPress-7.1-21759B?logo=wordpress&logoColor=white)
@@ -244,6 +245,7 @@ Run `./dev help` for the full list.
 | `./dev prod [up\|down\|logs]` | Build and run the **production image** on <http://localhost:8090> against the local database |
 | `./dev azure setup\|deploy\|status\|github-oidc\|teardown` | Manual Azure deployment (wrappers for `scripts/azure/*.sh`; prefix with `DRY_RUN=1` to preview) |
 | `./dev azure wp <args>` / `./dev azure shell` | WP-CLI or a shell (as www-data) inside the running Azure container, via your `az login` |
+| `./dev release prepare\|tag\|check\|notes <x.y.z>` | Prepare, tag and verify releases (see [Releasing](#releasing)) |
 
 **Database and WP-CLI examples**
 
@@ -586,9 +588,10 @@ Lightweight GitHub Actions checks run on every pull request and on `main`:
 | Workflow | Checks |
 |---|---|
 | [`CI`](.github/workflows/ci.yml) | **PHP 8.3 and 8.5:** `composer validate`, Pint, PHPStan, Pest · **Theme:** ESLint, build · **Editorconfig** |
-| [`Lint`](.github/workflows/lint.yml) | **actionlint** (workflows), **ShellCheck** (shell scripts), **Hadolint** (Dockerfile), container app template check (offline) |
+| [`Lint`](.github/workflows/lint.yml) | **actionlint** (workflows), **ShellCheck** (shell scripts), **Hadolint** (Dockerfile), container app template check (offline), release metadata check (changelog and version headers agree) |
 | [`Security`](.github/workflows/security.yml) | **`composer audit`** and **`npm audit`** (known vulnerabilities), **Gitleaks** (secrets in the full history). Also runs weekly |
 | [`Docker`](.github/workflows/docker.yml) | Production image build and smoke test (when Docker-related files change) |
+| [`Release`](.github/workflows/release.yml) | On an `x.y.z` tag: verifies the changelog and version headers, then publishes the GitHub release with the changelog notes |
 | [`Deploy`](.github/workflows/deploy.yml) | **Manual:** build, push to Azure Container Registry, roll out to Container Apps (OIDC, no stored passwords). See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) |
 
 **Dependabot** ([`.github/dependabot.yml`](.github/dependabot.yml)) opens weekly
@@ -603,6 +606,50 @@ Required status checks (branch protection) need GitHub Pro or a public
 repository; until then, keep checks green before merging.
 
 Branch naming: `feature/…`, `fix/…`, `chore/…`.
+
+</details>
+
+<a name="releasing"></a>
+<details>
+<summary><b>🏷️ Releasing and changelog</b></summary>
+
+<br>
+
+Releases follow [Semantic Versioning](https://semver.org/) and are tagged on
+GitHub as plain **`x.y.z`** (for example `0.1.0`, no `v` prefix). Changes are
+recorded in [CHANGELOG.md](CHANGELOG.md), whose sections become the GitHub
+release notes.
+
+| Part | Version |
+|---|---|
+| **MAJOR** (`1.0.0`) | Breaking changes (REST API, data model, configuration) |
+| **MINOR** (`0.2.0`) | New features, backwards compatible |
+| **PATCH** (`0.1.1`) | Bug and security fixes |
+
+The version lives in three places, kept in sync by the script and checked in CI:
+the plugin header and `JALASUPPORT_VERSION` in `jalasupport.php`, and the theme
+`style.css` header.
+
+**While developing:** add a line under `## [Unreleased]` in `CHANGELOG.md`
+(`Added`, `Changed`, `Fixed`, `Removed`, `Security`) in the same pull request
+as the change.
+
+**To release:**
+
+```bash
+git checkout main && git pull
+./dev release prepare 0.2.0          # release/0.2.0 branch: dates the changelog, bumps versions, commits
+git push -u origin release/0.2.0     # open a PR "Release 0.2.0" and merge it
+
+git checkout main && git pull
+DRY_RUN=1 ./dev release tag 0.2.0    # preview the tag and notes
+./dev release tag 0.2.0              # creates and pushes the tag (asks first)
+```
+
+Pushing the tag starts the [`Release`](.github/workflows/release.yml) workflow,
+which checks that the tag is on `main` and matches the changelog and version
+headers, then publishes the release. Releasing does not deploy: deploy the
+tagged code with `./dev azure deploy` or the Deploy workflow.
 
 </details>
 
