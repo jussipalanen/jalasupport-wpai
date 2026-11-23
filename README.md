@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="docs/images/logo.svg" alt="JalaSupport AI logo: the letters JS wearing a support headset on a dark purple circle" width="128" height="128">
+
 # JalaSupport AI
 
 **An AI-assisted customer support and ticket management mini-project built on WordPress and the Roots ecosystem.**
