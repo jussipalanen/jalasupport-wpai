@@ -59,6 +59,7 @@ PY
 }
 
 acorn_version() {
+    # shellcheck disable=SC2016 # PHP code: $ must reach PHP unexpanded.
     php -r '
         $lock = json_decode(file_get_contents("composer.lock"), true);
         foreach ($lock["packages"] as $package) {
