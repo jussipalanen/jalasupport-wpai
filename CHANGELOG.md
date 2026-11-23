@@ -16,6 +16,8 @@ Releases are tagged on GitHub as plain `x.y.z` (for example `0.1.0`); see
   `./dev azure import-tickets` for the Azure app. Imports validate every
   ticket, assign new IDs and a chosen author, keep the original creation date
   and skip tickets imported before; `--dry-run` previews.
+- `SECURITY.md` with private vulnerability reporting, and README notes on the
+  repository rules for the now public repository.
 
 ### Fixed
 
