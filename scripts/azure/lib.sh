@@ -28,13 +28,15 @@ run() {
 }
 
 # Random lowercase letters and digits.
+# "|| true": tr ends with SIGPIPE when head has enough, which pipefail would
+# otherwise turn into a failure (and an exit under set -e).
 random_alnum() {
-    LC_ALL=C tr -dc 'a-z0-9' < /dev/urandom | head -c "${1:-16}"
+    LC_ALL=C tr -dc 'a-z0-9' < /dev/urandom 2> /dev/null | head -c "${1:-16}" || true
 }
 
 # Random secret safe for YAML, env files and URLs.
 random_secret() {
-    LC_ALL=C tr -dc 'A-Za-z0-9_-' < /dev/urandom | head -c "${1:-64}"
+    LC_ALL=C tr -dc 'A-Za-z0-9_-' < /dev/urandom 2> /dev/null | head -c "${1:-64}" || true
 }
 
 load_config() {

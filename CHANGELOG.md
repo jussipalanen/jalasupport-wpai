@@ -9,8 +9,18 @@ Releases are tagged on GitHub as plain `x.y.z` (for example `0.1.0`); see
 
 ## [Unreleased]
 
+### Added
+
+- **Ticket export and import** as JSON: `wp jalasupport tickets export|import`,
+  `./dev tickets export|import` locally and `./dev azure export-tickets` /
+  `./dev azure import-tickets` for the Azure app. Imports validate every
+  ticket, assign new IDs and a chosen author, keep the original creation date
+  and skip tickets imported before; `--dry-run` previews.
+
 ### Fixed
 
+- `./dev azure wp` passes WP-CLI options such as `--role=…` correctly (they
+  were parsed by `su` before).
 - README release badge shows the current version (the dynamic badge cannot
   read a private repository); `./dev release` keeps it in sync.
 
