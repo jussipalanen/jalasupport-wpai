@@ -605,10 +605,16 @@ are enabled for the repository.
 Passing checks are a prerequisite for human review, not a replacement for it.
 The [PR template](.github/pull_request_template.md) contains a review checklist,
 and [`CODEOWNERS`](.github/CODEOWNERS) requests a review from the code owner.
-Required status checks (branch protection) need GitHub Pro or a public
-repository; until then, keep checks green before merging.
+**Repository rules:** `main` changes only through pull requests with all
+required checks green, and can't be force-pushed or deleted. Release tags
+can't be moved or deleted. Workflows from outside contributors' pull requests
+run only after approval, and secret scanning with push protection is enabled.
 
 Branch naming: `feature/…`, `fix/…`, `chore/…`.
+
+**Contributions:** this is a personal portfolio project, and only the owner
+changes the code. Issues are welcome; report security problems privately as
+described in [SECURITY.md](SECURITY.md).
 
 </details>
 
