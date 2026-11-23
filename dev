@@ -53,6 +53,10 @@ Project
     composer <args>   Run Composer in the app container
     wp <args>         Run WP-CLI in the app container, e.g. ./dev wp plugin list
     test              Run the Pest test suite
+    tickets export [--file=<path>] [--ids=<ids>]
+                        Export local tickets as JSON (default: backups/tickets-<time>.json)
+    tickets import <file> --author=<login> [--dry-run]
+                        Import a ticket export (local or from ./dev azure export-tickets)
     lint [--fix]      Run all linters: Pint, PHPStan, ESLint, editorconfig (--fix auto-fixes)
     npm <args>        Run npm in the theme directory (on the host)
     assets            Install npm dependencies (root tooling + theme) and build assets
@@ -70,6 +74,10 @@ Azure (manual, nothing runs automatically; see docs/DEPLOYMENT.md)
     azure github-oidc One-time access for the GitHub Actions Deploy workflow
     azure shell       Shell in the Azure container as www-data (--root for root)
     azure wp <args>   WP-CLI in the Azure container, e.g. ./dev azure wp plugin list
+    azure export-tickets [--file=<path>] [--ids=<ids>]
+                        Download the Azure tickets (default: backups/azure-tickets-<time>.json)
+    azure import-tickets <file> --author=<login> [--dry-run]
+                        Import a ticket export into Azure
     azure teardown    Delete the whole deployment (BACKUP=1 exports data first)
     Preview any of them without changes: DRY_RUN=1 ./dev azure setup
 
@@ -156,6 +164,30 @@ case "$command" in
     test)
         app_exec composer test -- "$@"
         ;;
+    tickets)
+        # Paths are relative to the project root (mounted in the container).
+        case "${1:-}" in
+            export)
+                shift
+                case " $* " in
+                    *" --file="*) ;;
+                    *)
+                        mkdir -p backups
+                        set -- "--file=backups/tickets-$(date +%Y%m%d-%H%M%S).json" "$@"
+                        ;;
+                esac
+                app_exec wp jalasupport tickets export "$@"
+                ;;
+            import)
+                shift
+                app_exec wp jalasupport tickets import "$@"
+                ;;
+            *)
+                echo "Usage: ./dev tickets export [--file=<path>] [--ids=<ids>] | import <file> --author=<login> [--dry-run]" >&2
+                exit 1
+                ;;
+        esac
+        ;;
     lint)
         if [ "${1:-}" = "--fix" ]; then
             app_exec composer lint:fix
@@ -220,6 +252,11 @@ case "$command" in
                 ;;
             shell | wp)
                 exec scripts/azure/exec.sh "$@"
+                ;;
+            export-tickets | import-tickets)
+                mode="${1%-tickets}"
+                shift
+                exec scripts/azure/tickets.sh "$mode" "$@"
                 ;;
             help | -h | --help)
                 usage | sed -n '/^Azure/,/DRY_RUN=1 \.\/dev azure setup/p'
