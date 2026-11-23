@@ -16,6 +16,7 @@ Every script is also available through the developer helper:
 | `./dev azure status` | `scripts/azure/status.sh`: URL, revision, replicas, database (read-only; `--health` also requests the health endpoint and wakes the app) |
 | `./dev azure github-oidc` | `scripts/azure/github-oidc.sh` |
 | `./dev azure shell` / `./dev azure wp <args>` | `scripts/azure/exec.sh`: shell or WP-CLI inside the running container (see *WP-CLI and shell on Azure*) |
+| `./dev azure export-tickets` / `./dev azure import-tickets <file>` | `scripts/azure/tickets.sh`: copy tickets between this machine and Azure (see *Copying tickets*) |
 | `./dev azure teardown` | `scripts/azure/teardown.sh` |
 
 For example: `DRY_RUN=1 ./dev azure setup`.
@@ -262,6 +263,50 @@ image. After updating to a version that includes them, run
 - **Don't pass secrets as arguments.** Commands are visible to Azure's exec
   endpoint and in your local shell history. Use WP-CLI's prompts instead, e.g.
   `./dev azure wp user create agent agent@example.com --role=jalasupport_agent --prompt=user_pass`.
+
+## Copying tickets (local and Azure)
+
+Tickets move between sites as JSON export files. Imports never copy database
+rows: every ticket is validated like a ticket created in the app, gets a new
+ID on the target site and the author you choose, and keeps its original
+creation date. Each imported ticket remembers where it came from
+(`<source site>#<source ticket ID>`), so importing the same file again skips
+the tickets that are already there (including trashed ones).
+
+```bash
+# Local -> Azure
+./dev tickets export                                    # backups/tickets-<time>.json
+./dev azure import-tickets backups/tickets-<time>.json --author=admin --dry-run
+./dev azure import-tickets backups/tickets-<time>.json --author=admin
+
+# Azure -> local
+./dev azure export-tickets                              # backups/azure-tickets-<time>.json
+./dev tickets import backups/azure-tickets-<time>.json --author=admin --dry-run
+./dev tickets import backups/azure-tickets-<time>.json --author=admin
+```
+
+Options: `--ids=4,5` exports selected tickets only; `--file=<path>` chooses
+the export file. `--author` must be a user on the *target* site with access
+to the support app (an administrator or `jalasupport_agent`). Run the
+`--dry-run` first: it validates every ticket and lists what would be
+imported, without saving anything. Invalid tickets are reported and skipped.
+
+How the Azure commands transfer the file:
+
+1. They check that the app refuses web access to
+   `/app/uploads/jalasupport-import/` (blocked in the Apache configuration of
+   the image). If it doesn't (an image from before this feature), they stop
+   before writing anything: run `./dev azure deploy` first.
+2. The file is uploaded to, or written into, that folder on the `uploads`
+   Azure Files share under a random name. The storage account key comes from
+   your `az login` session and is passed to `az storage` through the
+   environment, not on the command line.
+3. WP-CLI runs in the container (as with `./dev azure wp`).
+4. The file is deleted from the share afterwards, also when a step fails.
+
+Export files contain customer names and email addresses. `backups/` is
+git-ignored and the files are created readable by you only; delete them when
+you no longer need them.
 
 ## Ending the deployment
 

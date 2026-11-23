@@ -238,6 +238,8 @@ Run `./dev help` for the full list.
 | `./dev composer <args>` | Composer in the container |
 | `./dev wp <args>` | Any WP-CLI command in the container |
 | `./dev test` | Pest test suite |
+| `./dev tickets export [--ids=…] [--file=…]` | Export local tickets as JSON (default `backups/tickets-<time>.json`) |
+| `./dev tickets import <file> --author=<login> [--dry-run]` | Import a ticket export (validated, new IDs, duplicates skipped) |
 | `./dev lint [--fix]` | All linters: Pint, PHPStan, ESLint, editorconfig (`--fix` auto-fixes style) |
 | `./dev npm <args>` | npm in the theme directory (host) |
 | `./dev assets` | `npm install` (root tooling and theme) + theme `npm run build` |
@@ -245,6 +247,7 @@ Run `./dev help` for the full list.
 | `./dev prod [up\|down\|logs]` | Build and run the **production image** on <http://localhost:8090> against the local database |
 | `./dev azure setup\|deploy\|status\|github-oidc\|teardown` | Manual Azure deployment (wrappers for `scripts/azure/*.sh`; prefix with `DRY_RUN=1` to preview) |
 | `./dev azure wp <args>` / `./dev azure shell` | WP-CLI or a shell (as www-data) inside the running Azure container, via your `az login` |
+| `./dev azure export-tickets` / `./dev azure import-tickets <file> --author=<login>` | Copy tickets from or to Azure (see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md#copying-tickets-local-and-azure)) |
 | `./dev release prepare\|tag\|check\|notes <x.y.z>` | Prepare, tag and verify releases (see [Releasing](#releasing)) |
 
 **Database and WP-CLI examples**
