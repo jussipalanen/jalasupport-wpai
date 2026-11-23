@@ -42,6 +42,9 @@ wp-cli.local.yml
 # Node
 node_modules/
 
+# Build output (Playground demo bundle: scripts/playground.sh)
+/build/
+
 # Editors / OS
 .idea/
 .vscode/
