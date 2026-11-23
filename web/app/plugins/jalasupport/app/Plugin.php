@@ -4,16 +4,19 @@ declare(strict_types=1);
 
 namespace JalaSupport;
 
+use JalaSupport\Console\TicketsCommand;
 use JalaSupport\Fields\TicketFields;
 use JalaSupport\Http\Controllers\TicketAiController;
 use JalaSupport\Http\Controllers\TicketController;
 use JalaSupport\PostTypes\TicketPostType;
 use JalaSupport\Services\AI\AiProviderFactory;
 use JalaSupport\Services\TicketRepository;
+use JalaSupport\Services\TicketTransfer;
 use JalaSupport\Services\TicketValidator;
 use JalaSupport\Support\AiAccessPolicy;
 use JalaSupport\Support\Installer;
 use JalaSupport\Support\RateLimiter;
+use WP_CLI;
 
 /**
  * Plugin bootstrap: wires WordPress hooks to the application components.
@@ -25,6 +28,14 @@ final class Plugin
         add_action('init', [Installer::class, 'maybeUpgrade'], 5);
         add_action('init', [new TicketPostType(), 'register']);
         (new TicketFields())->register();
+
+        if (defined('WP_CLI') && WP_CLI) {
+            $tickets = new TicketRepository();
+            WP_CLI::add_command('jalasupport tickets', new TicketsCommand(
+                $tickets,
+                new TicketTransfer($tickets, new TicketValidator()),
+            ));
+        }
 
         add_action('rest_api_init', static function (): void {
             $tickets = new TicketRepository();

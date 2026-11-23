@@ -28,6 +28,9 @@ class TicketRepository
 
     public const SORTABLE = ['created_at' => 'date', 'updated_at' => 'modified', 'title' => 'title'];
 
+    /** Origin of an imported ticket ("<source>#<source_id>"), see TicketTransfer. */
+    public const IMPORT_KEY_META = '_jalasupport_import_key';
+
     public function find(int $id): ?Ticket
     {
         $post = get_post($id);
@@ -41,16 +44,29 @@ class TicketRepository
 
     /**
      * @param  array<string, string>  $data  Sanitized data from TicketValidator.
+     * @param  array{created_at?: string|null, import_key?: string}  $options
+     *         created_at: original creation time (GMT "Y-m-d H:i:s"), import_key: see IMPORT_KEY_META.
      */
-    public function create(array $data, int $authorId): Ticket|WP_Error
+    public function create(array $data, int $authorId, array $options = []): Ticket|WP_Error
     {
-        $postId = wp_insert_post([
+        $post = [
             'post_type' => TicketPostType::NAME,
             'post_status' => 'publish',
             'post_title' => $data['title'],
             'post_content' => $data['description'],
             'post_author' => $authorId,
-        ], true);
+        ];
+
+        if (! empty($options['created_at'])) {
+            $post['post_date_gmt'] = $options['created_at'];
+            $post['post_date'] = get_date_from_gmt($options['created_at']);
+        }
+
+        if (! empty($options['import_key'])) {
+            $post['meta_input'] = [self::IMPORT_KEY_META => $options['import_key']];
+        }
+
+        $postId = wp_insert_post($post, true);
 
         if ($postId instanceof WP_Error) {
             Logger::error('ticket_create_failed', ['error' => $postId->get_error_code()]);
@@ -91,6 +107,45 @@ class TicketRepository
         }
 
         return $this->find($ticket->id) ?? $this->persistenceError();
+    }
+
+    /**
+     * ID of a ticket imported from the given origin, including trashed ones,
+     * so a deleted import is not brought back by importing the file again.
+     */
+    public function findIdByImportKey(string $importKey): ?int
+    {
+        $ids = get_posts([
+            'post_type' => TicketPostType::NAME,
+            'post_status' => ['publish', 'draft', 'pending', 'private', 'trash'],
+            'posts_per_page' => 1,
+            'fields' => 'ids',
+            'no_found_rows' => true,
+            'suppress_filters' => true,
+            'meta_query' => [['key' => self::IMPORT_KEY_META, 'value' => $importKey]],
+        ]);
+
+        return $ids === [] ? null : (int) $ids[0];
+    }
+
+    /**
+     * Every published ticket, oldest first, loaded in pages of MAX_PER_PAGE.
+     *
+     * @return \Generator<int, Ticket>
+     */
+    public function all(): \Generator
+    {
+        $page = 1;
+
+        do {
+            $result = $this->paginate(['orderby' => 'created_at', 'order' => 'ASC', 'page' => $page, 'per_page' => self::MAX_PER_PAGE]);
+
+            foreach ($result['items'] as $ticket) {
+                yield $ticket;
+            }
+
+            $page++;
+        } while ($page <= $result['pages']);
     }
 
     /**

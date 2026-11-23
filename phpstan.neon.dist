@@ -11,4 +11,6 @@ parameters:
         - web/app/themes/jalasupport/vendor (?)
     bootstrapFiles:
         - tests/phpstan/bootstrap.php
+    scanFiles:
+        - tests/phpstan/wp-cli.php
     tmpDir: .phpstan-cache
