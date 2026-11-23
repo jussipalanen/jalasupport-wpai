@@ -14,9 +14,10 @@ printf '%s' "${1:-}" | base64 -d > "$args_file"
 cd /var/www/html
 
 if [ "$(id -u)" -eq 0 ]; then
-    # su passes the extra arguments to the shell as $0 ("wp") and "$@".
-    # shellcheck disable=SC2016  # $@ must expand in the www-data shell.
-    xargs -0 -a "$args_file" su -s /bin/sh www-data -c 'cd /var/www/html && exec wp "$@"' wp
+    # Drop to www-data with setpriv: unlike su, it stops parsing options at
+    # "--", so WP-CLI flags such as --role=... reach wp unchanged.
+    xargs -0 -a "$args_file" setpriv --reuid=www-data --regid=www-data --init-groups -- \
+        env HOME=/var/www wp
 else
     xargs -0 -a "$args_file" wp
 fi
