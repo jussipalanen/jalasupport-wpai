@@ -30,7 +30,8 @@ for key in AUTH_KEY SECURE_AUTH_KEY LOGGED_IN_KEY NONCE_KEY AUTH_SALT SECURE_AUT
     printf -v "$key" 'dummy-%s-0123456789' "$key"
 done
 AI_PROVIDER="gemini"
-GEMINI_API_KEY="dummy-gemini-key-0123456789"
+# Newer Google keys contain dots; cover that format.
+GEMINI_API_KEY="dummy.gemini-key-0123456789"
 GEMINI_MODEL="gemini-flash-lite-latest"
 AI_DAILY_LIMIT="200"
 
@@ -67,6 +68,10 @@ for variant in none ai; do
     fi
     if [ "$variant" = "ai" ] && ! grep -q "secretRef: gemini-api-key" "$OUTPUT"; then
         fail "The AI block is missing although it was requested."
+    fi
+    # The dry-run preview must never show secret values (all dummies contain "dummy").
+    if mask_secrets "$OUTPUT" | grep -q "dummy"; then
+        fail "mask_secrets left a secret value visible (optional blocks: ${variant})."
     fi
     note "Template OK (optional blocks: ${variant})."
 done

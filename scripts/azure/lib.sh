@@ -160,3 +160,15 @@ render_template() {
         END { exit failed }
     ' "$template"
 }
+
+# Print a rendered app definition with every secret value masked. Masks by
+# position (values under "secrets:"), not by character pattern, so secrets
+# of any format are hidden.
+mask_secrets() {
+    awk '
+        /^[[:space:]]*secrets:[[:space:]]*$/ { in_secrets = 1; indent = match($0, /[^ ]/); print; next }
+        in_secrets && NF && match($0, /[^ ]/) <= indent { in_secrets = 0 }
+        in_secrets && /^[[:space:]]*value:/ { sub(/value:.*/, "value: \"***\""); print; next }
+        { print }
+    ' "$1"
+}
