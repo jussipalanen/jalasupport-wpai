@@ -5,7 +5,7 @@
 **An AI-assisted customer support and ticket management mini-project built on WordPress and the Roots ecosystem.**
 
 [![CI](https://github.com/jussipalanen/jalasupport-wpai/actions/workflows/ci.yml/badge.svg)](https://github.com/jussipalanen/jalasupport-wpai/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/jussipalanen/jalasupport-wpai?label=release&color=6d28d9)](CHANGELOG.md)
+[![Release](https://img.shields.io/badge/release-0.1.0-6d28d9)](CHANGELOG.md)
 
 ![PHP](https://img.shields.io/badge/PHP-8.3%2B-777BB4?logo=php&logoColor=white)
 ![WordPress](https://img.shields.io/badge/WordPress-7.1-21759B?logo=wordpress&logoColor=white)
@@ -626,9 +626,10 @@ release notes.
 | **MINOR** (`0.2.0`) | New features, backwards compatible |
 | **PATCH** (`0.1.1`) | Bug and security fixes |
 
-The version lives in three places, kept in sync by the script and checked in CI:
-the plugin header and `JALASUPPORT_VERSION` in `jalasupport.php`, and the theme
-`style.css` header.
+The version lives in four places, kept in sync by the script and checked in CI:
+the plugin header and `JALASUPPORT_VERSION` in `jalasupport.php`, the theme
+`style.css` header and the README release badge (a static badge, because
+shields.io cannot read releases of a private repository).
 
 **While developing:** add a line under `## [Unreleased]` in `CHANGELOG.md`
 (`Added`, `Changed`, `Fixed`, `Removed`, `Security`) in the same pull request

@@ -22,6 +22,8 @@ cd "$(dirname "$0")/.."
 CHANGELOG="CHANGELOG.md"
 PLUGIN_FILE="web/app/plugins/jalasupport/jalasupport.php"
 THEME_FILE="web/app/themes/jalasupport/style.css"
+# Static badge: shields.io cannot read releases of a private repository.
+README_FILE="README.md"
 REPO_URL="https://github.com/jussipalanen/jalasupport-wpai"
 DRY_RUN="${DRY_RUN:-0}"
 
@@ -45,6 +47,7 @@ latest_version() {
 plugin_header_version() { sed -nE 's/^ \* Version:[[:space:]]+([^[:space:]]+).*/\1/p' "$PLUGIN_FILE"; }
 plugin_constant_version() { sed -nE "s/^define\('JALASUPPORT_VERSION', '([^']+)'\);/\1/p" "$PLUGIN_FILE"; }
 theme_version() { sed -nE 's/^Version:[[:space:]]+([^[:space:]]+).*/\1/p' "$THEME_FILE"; }
+badge_version() { sed -nE 's#.*img\.shields\.io/badge/release-([0-9.]+)-.*#\1#p' "$README_FILE" | head -n1; }
 
 # Body of one version's changelog section, without surrounding blank lines.
 section() {
@@ -79,7 +82,7 @@ cmd_check() {
         errors=1
     }
 
-    for pair in "plugin header:$(plugin_header_version)" "plugin JALASUPPORT_VERSION:$(plugin_constant_version)" "theme style.css:$(theme_version)"; do
+    for pair in "plugin header:$(plugin_header_version)" "plugin JALASUPPORT_VERSION:$(plugin_constant_version)" "theme style.css:$(theme_version)" "README release badge:$(badge_version)"; do
         actual="${pair##*:}"
         [ "$actual" = "$version" ] || {
             note "${pair%:*} is '${actual}', expected ${version}"
@@ -88,7 +91,7 @@ cmd_check() {
     done
 
     [ "$errors" = 0 ] || fail "Release metadata does not match version ${version}."
-    note "Release metadata OK for ${version} (changelog, plugin, theme)."
+    note "Release metadata OK for ${version} (changelog, plugin, theme, README badge)."
 }
 
 cmd_notes() {
@@ -118,7 +121,7 @@ cmd_prepare() {
     info "Prepare release ${version} (previous: ${previous:-none})$([ "$DRY_RUN" = 1 ] && echo ' (DRY RUN)')"
     note "Branch:    ${branch}"
     note "Changelog: [Unreleased] -> [${version}] - ${today}"
-    note "Versions:  ${PLUGIN_FILE} (header, constant), ${THEME_FILE}"
+    note "Versions:  ${PLUGIN_FILE} (header, constant), ${THEME_FILE}, ${README_FILE} badge"
     [ "$DRY_RUN" = 1 ] && return 0
 
     git checkout -q -b "$branch"
@@ -137,9 +140,10 @@ cmd_prepare() {
     sed -i -E "s/^( \* Version:[[:space:]]+).*/\1${version}/" "$PLUGIN_FILE"
     sed -i -E "s/^define\('JALASUPPORT_VERSION', '[^']+'\);/define('JALASUPPORT_VERSION', '${version}');/" "$PLUGIN_FILE"
     sed -i -E "s/^(Version:[[:space:]]+).*/\1${version}/" "$THEME_FILE"
+    sed -i -E "s#(img\.shields\.io/badge/release-)[0-9.]+-#\1${version}-#" "$README_FILE"
 
     cmd_check "$version"
-    git add "$CHANGELOG" "$PLUGIN_FILE" "$THEME_FILE"
+    git add "$CHANGELOG" "$PLUGIN_FILE" "$THEME_FILE" "$README_FILE"
     git commit -q -m "chore(release): ${version}"
 
     info "Release commit created on ${branch}"
