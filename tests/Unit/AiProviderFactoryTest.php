@@ -2,6 +2,7 @@
 
 use JalaSupport\Services\AI\AiProvider;
 use JalaSupport\Services\AI\AiProviderFactory;
+use JalaSupport\Services\AI\DemoAiService;
 
 function fakeProvider(bool $configured): AiProvider
 {
@@ -31,4 +32,11 @@ it('returns Azure (reported as not configured) when nothing is configured', func
     $azure = fakeProvider(false);
 
     expect(AiProviderFactory::select('unknown', $azure, fakeProvider(false)))->toBe($azure);
+});
+
+it('selects the demo provider, which needs no AI service', function () {
+    $provider = AiProviderFactory::select('demo', fakeProvider(true), fakeProvider(true));
+
+    expect($provider)->toBeInstanceOf(DemoAiService::class)
+        ->and($provider->isConfigured())->toBeTrue();
 });

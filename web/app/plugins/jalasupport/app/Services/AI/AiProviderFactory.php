@@ -9,6 +9,8 @@ namespace JalaSupport\Services\AI;
  *
  * - "azure" or "gemini": that provider (even if it is not configured, so the
  *   UI reports "not configured" instead of silently using another service).
+ * - "demo": sample answers from keyword rules, without any AI service
+ *   (public demos; see DemoAiService).
  * - empty: the first configured provider (Azure OpenAI, then Gemini).
  */
 final class AiProviderFactory
@@ -29,6 +31,7 @@ final class AiProviderFactory
         return match (strtolower(trim($choice))) {
             'azure' => $azure,
             'gemini' => $gemini,
+            'demo' => new DemoAiService(),
             default => match (true) {
                 $azure->isConfigured() => $azure,
                 $gemini->isConfigured() => $gemini,
