@@ -193,7 +193,9 @@ DB_HOST="${MYSQL_SERVER}.mysql.database.azure.com"
 
 INCLUDE_OPTIONAL=""
 if [ -n "${GEMINI_API_KEY:-}" ]; then
-    [[ "$GEMINI_API_KEY" =~ ^[A-Za-z0-9_-]{20,}$ ]] || fail "GEMINI_API_KEY has an unexpected format."
+    # Classic keys (AIza...) and newer keys containing dots; no quotes or
+    # whitespace, so the value is safe inside the YAML definition.
+    [[ "$GEMINI_API_KEY" =~ ^[A-Za-z0-9._-]{20,}$ ]] || fail "GEMINI_API_KEY has an unexpected format (allowed: letters, digits, '.', '_' and '-')."
     AI_PROVIDER="${AI_PROVIDER:-gemini}"
     GEMINI_MODEL="${GEMINI_MODEL:-gemini-flash-lite-latest}"
     AI_DAILY_LIMIT="${AI_DAILY_LIMIT:-200}"
@@ -214,7 +216,7 @@ render_template "$PROJECT_DIR/infra/containerapp.yaml" \
 
 if [ "$DRY_RUN" = "1" ]; then
     note "[dry-run] Container app definition (secrets masked):"
-    sed -E 's/(value: )"[A-Za-z0-9_-]{20,}"/\1"***"/' "$APP_YAML" | sed 's/^/        /'
+    mask_secrets "$APP_YAML" | sed 's/^/        /'
 elif az containerapp show -g "$AZ_RESOURCE_GROUP" -n "$APP_NAME" --output none 2> /dev/null; then
     az containerapp update -g "$AZ_RESOURCE_GROUP" -n "$APP_NAME" --yaml "$APP_YAML" --only-show-errors --output none
 else
