@@ -139,10 +139,17 @@ Config::define('LOGGED_IN_SALT', env('LOGGED_IN_SALT'));
 Config::define('NONCE_SALT', env('NONCE_SALT'));
 
 /**
- * JalaSupport: AI provider ("azure", "gemini", or empty to use the first
- * configured provider). AI features are disabled until a provider is set up.
+ * JalaSupport: AI provider ("azure", "gemini", "demo" for sample answers
+ * without an AI service, or empty to use the first configured provider).
+ * AI features are disabled until a provider is set up.
  */
 Config::define('AI_PROVIDER', env('AI_PROVIDER') ?: '');
+
+/**
+ * JalaSupport: demo mode for public demos. Only administrators can open
+ * wp-admin; other users stay in the support app.
+ */
+Config::define('JALASUPPORT_DEMO', (bool) env('JALASUPPORT_DEMO'));
 
 /**
  * JalaSupport: AI access. By default the AI endpoints only accept requests
