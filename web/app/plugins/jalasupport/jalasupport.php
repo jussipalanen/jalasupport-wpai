@@ -3,7 +3,7 @@
 /**
  * Plugin Name:       JalaSupport
  * Description:       Ticket management, REST API and AI assistance for JalaSupport AI.
- * Version:           0.1.0
+ * Version:           0.2.0
  * Requires at least: 6.6
  * Requires PHP:      8.3
  * Author:            JalaSupport
@@ -20,7 +20,7 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-define('JALASUPPORT_VERSION', '0.1.0');
+define('JALASUPPORT_VERSION', '0.2.0');
 define('JALASUPPORT_FILE', __FILE__);
 define('JALASUPPORT_PATH', plugin_dir_path(__FILE__));
 
