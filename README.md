@@ -71,6 +71,7 @@ rather than a traditional website:
 | ✅ | Server-side validation and sanitization, consistent JSON responses | ✅ |
 | 🤖 | AI ticket analysis (category, priority, summary, suggested reply) with **Google Gemini** (free tier) or **Azure OpenAI** | ✅ |
 | 🖥️ | SaaS-style UI (Blade + Tailwind + Alpine.js): dashboard, ticket list, ticket details, create ticket, settings | ✅ |
+| 🌐 | Public start page for visitors: what the app does, live ticket totals and charts (aggregate numbers only), sign-in button | ✅ |
 | ✨ | AI panel with accept / edit / reject for every suggestion | ✅ |
 | ☁️ | Azure free-tier deployment (Container Apps + MySQL Flexible Server), scripted | ✅ ready to run |
 
@@ -403,6 +404,7 @@ Service settings in Azure). **Never commit `.env`.**
 | `WP_HOME`, `WP_SITEURL` | Site URLs (`WP_SITEURL` = `${WP_HOME}/wp`) |
 | `AUTH_KEY` … `NONCE_SALT` | WordPress salts |
 | `AI_PROVIDER` | `gemini`, `azure`, `demo` (sample answers from keyword rules, no AI service), or empty for the first configured provider. AI is disabled until a provider is configured |
+| `JALASUPPORT_PUBLIC_STATS` | Ticket totals and charts on the public start page (default `true`). `false` keeps only the description and the sign-in button. Aggregate numbers only, cached for 5 minutes |
 | `JALASUPPORT_DEMO` | `true` for public demos: only administrators can open wp-admin; other users stay in the app. With `JALASUPPORT_DEMO_LOGIN` and `JALASUPPORT_DEMO_PASSWORD` (constants) the login screen shows the demo account |
 | `GEMINI_API_KEY` | Key from [Google AI Studio](https://aistudio.google.com/apikey). Free-tier keys: Google may use submitted content, so use test data only |
 | `GEMINI_MODEL`, `GEMINI_FALLBACK_MODEL` | Free-tier Flash models; defaults `gemini-flash-lite-latest` and `gemini-flash-latest` (fallback on timeout, overload or quota; `none` disables it) |

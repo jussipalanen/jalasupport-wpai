@@ -10,6 +10,7 @@ use JalaSupport\Http\Controllers\TicketAiController;
 use JalaSupport\Http\Controllers\TicketController;
 use JalaSupport\PostTypes\TicketPostType;
 use JalaSupport\Services\AI\AiProviderFactory;
+use JalaSupport\Services\PublicStats;
 use JalaSupport\Services\TicketRepository;
 use JalaSupport\Services\TicketTransfer;
 use JalaSupport\Services\TicketValidator;
@@ -30,6 +31,7 @@ final class Plugin
         add_action('init', [new TicketPostType(), 'register']);
         (new TicketFields())->register();
         (new DemoMode())->register();
+        (new PublicStats(new TicketRepository()))->register();
 
         if (defined('WP_CLI') && WP_CLI) {
             $tickets = new TicketRepository();

@@ -1,4 +1,4 @@
-@props(['variant' => 'primary', 'href' => null, 'icon' => null])
+@props(['variant' => 'primary', 'size' => 'md', 'href' => null, 'icon' => null])
 
 @php
     $classes = [
@@ -9,17 +9,23 @@
         'ai' => 'bg-violet-600 text-white shadow-sm hover:bg-violet-500 focus-visible:outline-violet-600',
     ][$variant] ?? '';
 
-    $base = 'inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-50';
+    $sizes = [
+        'md' => 'gap-1.5 rounded-md px-3 py-2 text-sm',
+        'lg' => 'gap-2 rounded-lg px-6 py-3 text-base',
+    ][$size] ?? '';
+    $iconSize = $size === 'lg' ? 'size-5' : 'size-4';
+
+    $base = "inline-flex items-center justify-center $sizes font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
 @endphp
 
 @if ($href)
     <a href="{{ $href }}" {{ $attributes->merge(['class' => "$base $classes"]) }}>
-        @if ($icon) <x-icon :name="$icon" class="size-4" /> @endif
+        @if ($icon) <x-icon :name="$icon" :class="$iconSize" /> @endif
         {{ $slot }}
     </a>
 @else
     <button {{ $attributes->merge(['type' => 'button', 'class' => "$base $classes"]) }}>
-        @if ($icon) <x-icon :name="$icon" class="size-4" /> @endif
+        @if ($icon) <x-icon :name="$icon" :class="$iconSize" /> @endif
         {{ $slot }}
     </button>
 @endif

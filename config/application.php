@@ -152,6 +152,12 @@ Config::define('AI_PROVIDER', env('AI_PROVIDER') ?: '');
 Config::define('JALASUPPORT_DEMO', (bool) env('JALASUPPORT_DEMO'));
 
 /**
+ * JalaSupport: ticket totals and charts on the public start page (on by
+ * default). Only aggregate numbers are shown, never individual tickets.
+ */
+Config::define('JALASUPPORT_PUBLIC_STATS', (bool) (env('JALASUPPORT_PUBLIC_STATS') ?? true));
+
+/**
  * JalaSupport: AI access. By default the AI endpoints only accept requests
  * from this site's own UI (cookie session + REST nonce, same origin); set
  * AI_ALLOW_API_CLIENTS=true to also allow application-password API clients.

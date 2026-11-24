@@ -6,7 +6,8 @@
  * The theme maps pretty URLs to Blade views. It renders the application
  * shell only: data is loaded from the jalasupport/v1 REST API, which
  * enforces authorization. Access to the views is still gated here so that
- * guests never see the application UI.
+ * guests never see the application UI: at the front page they get the
+ * public start page instead, everywhere else the login screen.
  */
 
 namespace App;
@@ -41,6 +42,14 @@ function current_route(): ?string
     }
 
     return is_front_page() ? 'dashboard' : null;
+}
+
+/**
+ * The public start page: the front page for visitors who are not logged in.
+ */
+function is_public_home(): bool
+{
+    return current_route() === 'dashboard' && ! is_user_logged_in();
 }
 
 function app_url(string $path = ''): string
@@ -79,14 +88,15 @@ add_filter('query_vars', function (array $vars) {
 });
 
 /**
- * Require login and application access for every application route.
+ * Require login and application access for every application route, except
+ * the public start page.
  */
 add_action('template_redirect', function () {
     if (current_route() === null) {
         return;
     }
 
-    if (! is_user_logged_in()) {
+    if (! is_user_logged_in() && ! is_public_home()) {
         auth_redirect();
     }
 
@@ -107,6 +117,10 @@ add_filter('template_include', function (string $template) {
 
     if ($route === null) {
         return $template;
+    }
+
+    if (is_public_home()) {
+        return get_theme_file_path('resources/views/public/home.blade.php');
     }
 
     $view = can_access_app() ? app_views()[$route] : 'app/forbidden';
@@ -136,7 +150,8 @@ add_filter('document_title_parts', function (array $parts) {
 
     $route = current_route();
 
-    if ($route !== null) {
+    // The public start page keeps the site name as its title.
+    if ($route !== null && ! is_public_home()) {
         $parts['title'] = $titles[$route];
     }
 
