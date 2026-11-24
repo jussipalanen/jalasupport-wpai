@@ -288,6 +288,7 @@ Run `./dev help` for the full list.
 | `./dev vite` | Vite dev server for the theme |
 | `./dev prod [up\|down\|logs]` | Build and run the **production image** on <http://localhost:8090> against the local database |
 | `./dev azure setup\|deploy\|status\|github-oidc\|teardown` | Manual Azure deployment (wrappers for `scripts/azure/*.sh`; prefix with `DRY_RUN=1` to preview) |
+| `./dev azure domain [add\|update <host>\|clean]` | Custom domain with a free managed certificate (see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md#custom-domain)) |
 | `./dev azure wp <args>` / `./dev azure shell` | WP-CLI or a shell (as www-data) inside the running Azure container, via your `az login` |
 | `./dev azure export-tickets` / `./dev azure import-tickets <file> --author=<login>` | Copy tickets from or to Azure (see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md#copying-tickets-local-and-azure)) |
 | `./dev release prepare\|tag\|check\|notes <x.y.z>` | Prepare, tag and verify releases (see [Releasing](#releasing)) |
@@ -525,10 +526,12 @@ DRY_RUN=1 ./dev azure setup    # preview, changes nothing
 ./dev azure setup              # create the deployment
 ./dev azure status             # URL, revision, replicas, database (read-only)
 ./dev azure deploy             # ship code changes later
+./dev azure domain add support.example.com   # optional custom domain
 ./dev azure teardown           # delete everything (BACKUP=1 to export first)
 ```
 
-Scaling to zero means a few-second cold start after idle periods. A budget
+Scaling to zero means a few-second cold start after idle periods
+(`APP_MIN_REPLICAS="1"` keeps the app running, roughly $10 a month). A budget
 alert notifies you of costs but doesn't stop them.
 
 📄 Full guide (costs, first-time setup, security, troubleshooting): [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)

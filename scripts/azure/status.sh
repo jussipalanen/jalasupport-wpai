@@ -22,7 +22,7 @@ fi
 info "Container app ${APP_NAME}"
 if az containerapp show -g "$AZ_RESOURCE_GROUP" -n "$APP_NAME" --output none 2> /dev/null; then
     az containerapp show -g "$AZ_RESOURCE_GROUP" -n "$APP_NAME" \
-        --query "{url: join('', ['https://', properties.configuration.ingress.fqdn]), state: properties.provisioningState, running: properties.runningStatus, revision: properties.latestRevisionName, image: properties.template.containers[0].image, minReplicas: properties.template.scale.minReplicas, maxReplicas: properties.template.scale.maxReplicas}" \
+        --query "{url: join('', ['https://', properties.configuration.ingress.fqdn]), state: properties.provisioningState, running: properties.runningStatus, revision: properties.latestRevisionName, image: properties.template.containers[0].image, domains: properties.configuration.ingress.customDomains[].name, minReplicas: properties.template.scale.minReplicas, maxReplicas: properties.template.scale.maxReplicas}" \
         -o yamlc
     note "Running replicas: $(az containerapp replica list -g "$AZ_RESOURCE_GROUP" -n "$APP_NAME" --query 'length(@)' -o tsv 2> /dev/null || echo 0) (0 = scaled to zero, wakes on the next request)"
 else

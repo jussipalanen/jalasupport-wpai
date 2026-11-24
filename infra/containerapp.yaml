@@ -26,6 +26,13 @@ properties:
       targetPort: 80
       transport: auto
       allowInsecure: false
+      # BEGIN optional: domain
+      # Custom domain with its Azure managed certificate (./dev azure domain).
+      customDomains:
+        - name: ${APP_DOMAIN}
+          bindingType: SniEnabled
+          certificateId: ${DOMAIN_CERT_ID}
+      # END optional: domain
     registries:
       # Pulled with the managed identity (AcrPull); no registry passwords.
       - server: ${ACR_SERVER}
@@ -123,9 +130,10 @@ properties:
               port: 80
             periodSeconds: 30
 
-    # Free tier: scale to zero when idle, never more than one replica.
+    # Free tier: scale to zero when idle (APP_MIN_REPLICAS=0), never more
+    # than one replica. APP_MIN_REPLICAS=1 keeps one replica running.
     scale:
-      minReplicas: 0
+      minReplicas: ${APP_MIN_REPLICAS}
       maxReplicas: 1
       rules:
         - name: http

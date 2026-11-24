@@ -94,6 +94,11 @@ require_tools() {
     require_azure
 }
 
+# Custom domain name: lowercase labels, at least one dot, not an Azure address.
+valid_hostname() {
+    [[ "$1" =~ ^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$ ]] && [[ "$1" != *.azurecontainerapps.io ]]
+}
+
 confirm() {
     [ "$DRY_RUN" = "1" ] && return 0
     local answer
