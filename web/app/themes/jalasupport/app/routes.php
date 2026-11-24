@@ -150,8 +150,11 @@ add_filter('document_title_parts', function (array $parts) {
 
     $route = current_route();
 
-    // The public start page keeps the site name as its title.
-    if ($route !== null && ! is_public_home()) {
+    // The public start page: site name and a tagline (the one from
+    // Settings > General, or a default that says what the app does).
+    if (is_public_home()) {
+        $parts['tagline'] = get_bloginfo('description') ?: __('AI-assisted customer support', 'jalasupport');
+    } elseif ($route !== null) {
         $parts['title'] = $titles[$route];
     }
 
