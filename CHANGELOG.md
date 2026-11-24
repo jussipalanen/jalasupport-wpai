@@ -9,10 +9,32 @@ Releases are tagged on GitHub as plain `x.y.z` (for example `0.1.0`); see
 
 ## [Unreleased]
 
+### Added
+
+- **Search engines and AI assistants:** the public start page has a meta
+  description, canonical URL, Open Graph tags and JSON-LD (`WebSite`,
+  `WebPage`, `SoftwareApplication`). Every other page is `noindex`. When
+  search engines are allowed (Settings > Reading), the sitemap lists only the
+  start page and `/llms.txt` describes the app; otherwise both stay off.
+
+### Changed
+
+- **Public start page:** visitors who are not signed in see what the app
+  does, the current ticket totals with charts (by status, priority and
+  category, plus the resolution rate) and a large sign-in button, instead of
+  being sent straight to the login screen. Every other page still requires
+  login, and only aggregate numbers are shown. The numbers are cached for
+  5 minutes and refreshed when a ticket changes; `JALASUPPORT_PUBLIC_STATS=false`
+  hides them.
+- The front end no longer loads WordPress' block, global and emoji styles and
+  scripts, which the theme does not use (about 100 KB less inline CSS per
+  page). Hashed build assets are cached by browsers for a year.
+
 ### Fixed
 
 - The Wordfence 2FA code step on the login screen uses the dark login card
   instead of a white box.
+- Start page footer text meets the WCAG AA contrast ratio.
 
 ## [0.2.0] - 2026-11-24
 
@@ -43,16 +65,6 @@ Releases are tagged on GitHub as plain `x.y.z` (for example `0.1.0`); see
   `setup.sh` runs again; `./dev azure status` lists it.
 - `APP_MIN_REPLICAS` in `scripts/azure/config.env`: `1` keeps the Azure app
   always on (no cold starts); `0`, the default, scales to zero.
-
-### Changed
-
-- **Public start page:** visitors who are not signed in see what the app
-  does, the current ticket totals with charts (by status, priority and
-  category, plus the resolution rate) and a large sign-in button, instead of
-  being sent straight to the login screen. Every other page still requires
-  login, and only aggregate numbers are shown. The numbers are cached for
-  5 minutes and refreshed when a ticket changes; `JALASUPPORT_PUBLIC_STATS=false`
-  hides them.
 
 ### Fixed
 
