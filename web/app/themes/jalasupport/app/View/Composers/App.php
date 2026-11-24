@@ -24,6 +24,7 @@ class App extends Composer
         'layouts.*',
         'sections.*',
         'app.*',
+        'public.*',
         'index',
         '404',
     ];
