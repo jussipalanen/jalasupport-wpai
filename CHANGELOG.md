@@ -37,6 +37,16 @@ Releases are tagged on GitHub as plain `x.y.z` (for example `0.1.0`); see
 - `APP_MIN_REPLICAS` in `scripts/azure/config.env`: `1` keeps the Azure app
   always on (no cold starts); `0`, the default, scales to zero.
 
+### Changed
+
+- **Public start page:** visitors who are not signed in see what the app
+  does, the current ticket totals with charts (by status, priority and
+  category, plus the resolution rate) and a large sign-in button, instead of
+  being sent straight to the login screen. Every other page still requires
+  login, and only aggregate numbers are shown. The numbers are cached for
+  5 minutes and refreshed when a ticket changes; `JALASUPPORT_PUBLIC_STATS=false`
+  hides them.
+
 ### Fixed
 
 - `./dev azure wp` passes WP-CLI options such as `--role=…` correctly (they
