@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 #
 # Offline check of infra/containerapp.yaml: render it with dummy values (with
-# and without the optional AI block) and validate the result. No Azure calls.
+# and without the optional AI and custom domain blocks) and validate the
+# result. No Azure calls.
 # Used by the Lint workflow; run locally with: scripts/azure/check-template.sh
 
 # The placeholder values below are read indirectly by render_template.
@@ -22,6 +23,9 @@ IMAGE="example.azurecr.io/jalasupport:test"
 APP_CPU="0.5"
 APP_MEMORY="1Gi"
 APP_URL="https://app.example.azurecontainerapps.io"
+APP_MIN_REPLICAS="0"
+APP_DOMAIN="support.example.com"
+DOMAIN_CERT_ID="/subscriptions/x/resourceGroups/rg/providers/Microsoft.App/managedEnvironments/env/managedCertificates/support"
 DB_HOST="db.mysql.database.azure.com"
 DB_NAME="jalasupport"
 MYSQL_ADMIN_USER="admin"
@@ -49,13 +53,13 @@ assert d["properties"]["template"]["scale"]["maxReplicas"] == 1' "$1"
     fi
 }
 
-for variant in none ai; do
+for variant in none ai "ai domain"; do
     INCLUDE_OPTIONAL=""
-    [ "$variant" = "ai" ] && INCLUDE_OPTIONAL="ai"
+    [ "$variant" != "none" ] && INCLUDE_OPTIONAL="$variant"
 
     render_template "$TEMPLATE" \
-        AZ_LOCATION IDENTITY_ID ENV_ID ACR_SERVER IMAGE APP_CPU APP_MEMORY APP_URL \
-        DB_HOST DB_NAME MYSQL_ADMIN_USER MYSQL_ADMIN_PASSWORD \
+        AZ_LOCATION IDENTITY_ID ENV_ID ACR_SERVER IMAGE APP_CPU APP_MEMORY APP_URL APP_MIN_REPLICAS \
+        APP_DOMAIN DOMAIN_CERT_ID DB_HOST DB_NAME MYSQL_ADMIN_USER MYSQL_ADMIN_PASSWORD \
         AUTH_KEY SECURE_AUTH_KEY LOGGED_IN_KEY NONCE_KEY \
         AUTH_SALT SECURE_AUTH_SALT LOGGED_IN_SALT NONCE_SALT \
         AI_PROVIDER GEMINI_API_KEY GEMINI_MODEL AI_DAILY_LIMIT \
@@ -66,8 +70,14 @@ for variant in none ai; do
     if [ "$variant" = "none" ] && grep -q "gemini" "$OUTPUT"; then
         fail "The AI block must be omitted when no key is configured."
     fi
-    if [ "$variant" = "ai" ] && ! grep -q "secretRef: gemini-api-key" "$OUTPUT"; then
+    if [ "$variant" != "none" ] && ! grep -q "secretRef: gemini-api-key" "$OUTPUT"; then
         fail "The AI block is missing although it was requested."
+    fi
+    if [ "$variant" = "ai domain" ] && ! grep -q "name: ${APP_DOMAIN}" "$OUTPUT"; then
+        fail "The custom domain block is missing although it was requested."
+    fi
+    if [ "$variant" != "ai domain" ] && grep -q "customDomains" "$OUTPUT"; then
+        fail "The custom domain block must be omitted when no domain is configured."
     fi
     # The dry-run preview must never show secret values (all dummies contain "dummy").
     if mask_secrets "$OUTPUT" | grep -q "dummy"; then

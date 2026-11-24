@@ -74,6 +74,8 @@ Azure (manual, nothing runs automatically; see docs/DEPLOYMENT.md)
     azure setup       Create or update the free-tier deployment (asks first)
     azure deploy      Build, push and roll out the current code
     azure status      Show the deployment state (read-only; --health wakes the app)
+    azure domain [add <host> | update <host> | clean]
+                        Custom domain with a free certificate (shows the DNS records first)
     azure github-oidc One-time access for the GitHub Actions Deploy workflow
     azure shell       Shell in the Azure container as www-data (--root for root)
     azure wp <args>   WP-CLI in the Azure container, e.g. ./dev azure wp plugin list
@@ -248,7 +250,7 @@ case "$command" in
     azure)
         # Thin wrappers around scripts/azure/*.sh (same prompts, DRY_RUN=1 supported).
         case "${1:-help}" in
-            setup | deploy | status | teardown | github-oidc)
+            setup | deploy | status | domain | teardown | github-oidc)
                 script="scripts/azure/${1}.sh"
                 shift
                 exec "$script" "$@"

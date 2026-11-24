@@ -176,8 +176,28 @@ done
 # -----------------------------------------------------------------------------
 APP_FQDN="${APP_NAME}.${ENV_DOMAIN}"
 APP_URL="https://${APP_FQDN}"
+INCLUDE_OPTIONAL=""
 
-info "Container app ${APP_NAME} (scale 0-1, HTTPS)"
+APP_MIN_REPLICAS="${APP_MIN_REPLICAS:-0}"
+[[ "$APP_MIN_REPLICAS" =~ ^[01]$ ]] || fail "APP_MIN_REPLICAS must be 0 (scale to zero) or 1 (always on)."
+
+# Custom domain (./dev azure domain add): keep its binding and address when
+# the app definition is applied again. Without its certificate (not added
+# yet), the app keeps the Azure address.
+DOMAIN_CERT_ID=""
+if [ -n "${APP_DOMAIN:-}" ]; then
+    valid_hostname "$APP_DOMAIN" || fail "APP_DOMAIN is not a valid domain name: ${APP_DOMAIN}"
+    DOMAIN_CERT_ID="$(az containerapp env certificate list -g "$AZ_RESOURCE_GROUP" -n "$ENV_NAME" \
+        --managed-certificates-only --query "[?properties.subjectName=='${APP_DOMAIN}'].id | [0]" -o tsv 2> /dev/null || true)"
+    if [ -n "$DOMAIN_CERT_ID" ]; then
+        APP_URL="https://${APP_DOMAIN}"
+        INCLUDE_OPTIONAL="domain"
+    else
+        warn "APP_DOMAIN ${APP_DOMAIN} has no certificate yet. After setup, add it with: ./dev azure domain add ${APP_DOMAIN}"
+    fi
+fi
+
+info "Container app ${APP_NAME} (min replicas ${APP_MIN_REPLICAS}, max 1, HTTPS)"
 
 # The app definition contains secrets: write it to a private temp file and
 # remove it afterwards.
@@ -191,7 +211,6 @@ ACR_SERVER="${ACR_NAME}.azurecr.io"
 # shellcheck disable=SC2034
 DB_HOST="${MYSQL_SERVER}.mysql.database.azure.com"
 
-INCLUDE_OPTIONAL=""
 if [ -n "${GEMINI_API_KEY:-}" ]; then
     # Classic keys (AIza...) and newer keys containing dots; no quotes or
     # whitespace, so the value is safe inside the YAML definition.
@@ -199,7 +218,7 @@ if [ -n "${GEMINI_API_KEY:-}" ]; then
     AI_PROVIDER="${AI_PROVIDER:-gemini}"
     GEMINI_MODEL="${GEMINI_MODEL:-gemini-flash-lite-latest}"
     AI_DAILY_LIMIT="${AI_DAILY_LIMIT:-200}"
-    INCLUDE_OPTIONAL="ai"
+    INCLUDE_OPTIONAL="${INCLUDE_OPTIONAL} ai"
 else
     note "GEMINI_API_KEY is empty: deploying without AI features."
 fi
@@ -207,8 +226,8 @@ fi
 # The app definition lives in infra/containerapp.yaml; render it with the
 # settings and secrets into the private temporary file.
 render_template "$PROJECT_DIR/infra/containerapp.yaml" \
-    AZ_LOCATION IDENTITY_ID ENV_ID ACR_SERVER IMAGE APP_CPU APP_MEMORY APP_URL \
-    DB_HOST DB_NAME MYSQL_ADMIN_USER MYSQL_ADMIN_PASSWORD \
+    AZ_LOCATION IDENTITY_ID ENV_ID ACR_SERVER IMAGE APP_CPU APP_MEMORY APP_URL APP_MIN_REPLICAS \
+    APP_DOMAIN DOMAIN_CERT_ID DB_HOST DB_NAME MYSQL_ADMIN_USER MYSQL_ADMIN_PASSWORD \
     AUTH_KEY SECURE_AUTH_KEY LOGGED_IN_KEY NONCE_KEY \
     AUTH_SALT SECURE_AUTH_SALT LOGGED_IN_SALT NONCE_SALT \
     AI_PROVIDER GEMINI_API_KEY GEMINI_MODEL AI_DAILY_LIMIT \
