@@ -222,9 +222,22 @@ class TicketRepository
      */
     public function countByStatus(): array
     {
-        $counts = ['total' => 0];
+        $counts = $this->countByMeta(TicketMeta::STATUS, TicketStatus::values());
 
-        foreach (TicketStatus::values() as $status) {
+        return ['total' => array_sum($counts)] + $counts;
+    }
+
+    /**
+     * Ticket counts for each value of a meta field (e.g. every priority).
+     *
+     * @param  list<string>  $values
+     * @return array<string, int>
+     */
+    public function countByMeta(string $key, array $values): array
+    {
+        $counts = [];
+
+        foreach ($values as $value) {
             $query = new WP_Query([
                 'post_type' => TicketPostType::NAME,
                 'post_status' => 'publish',
@@ -232,11 +245,10 @@ class TicketRepository
                 'fields' => 'ids',
                 'update_post_meta_cache' => false,
                 'update_post_term_cache' => false,
-                'meta_query' => [['key' => TicketMeta::STATUS, 'value' => $status]],
+                'meta_query' => [['key' => $key, 'value' => $value]],
             ]);
 
-            $counts[$status] = (int) $query->found_posts;
-            $counts['total'] += $counts[$status];
+            $counts[$value] = (int) $query->found_posts;
         }
 
         return $counts;
