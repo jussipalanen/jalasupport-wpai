@@ -9,6 +9,8 @@ Releases are tagged on GitHub as plain `x.y.z` (for example `0.1.0`); see
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-24
+
 ### Added
 
 - **Search engines and AI assistants:** the public start page has a meta
@@ -26,6 +28,7 @@ Releases are tagged on GitHub as plain `x.y.z` (for example `0.1.0`); see
   login, and only aggregate numbers are shown. The numbers are cached for
   5 minutes and refreshed when a ticket changes; `JALASUPPORT_PUBLIC_STATS=false`
   hides them.
+- GitHub releases are titled with the version only (`0.3.0`), like the tags.
 - The front end no longer loads WordPress' block, global and emoji styles and
   scripts, which the theme does not use (about 100 KB less inline CSS per
   page). Hashed build assets are cached by browsers for a year.
@@ -124,6 +127,7 @@ environment and Azure free-tier deployment.
 - Dry-run previews of the Azure deployment mask every secret value,
   regardless of its format.
 
-[Unreleased]: https://github.com/jussipalanen/jalasupport-wpai/compare/0.2.0...HEAD
+[Unreleased]: https://github.com/jussipalanen/jalasupport-wpai/compare/0.3.0...HEAD
+[0.3.0]: https://github.com/jussipalanen/jalasupport-wpai/compare/0.2.0...0.3.0
 [0.2.0]: https://github.com/jussipalanen/jalasupport-wpai/compare/0.1.0...0.2.0
 [0.1.0]: https://github.com/jussipalanen/jalasupport-wpai/releases/tag/0.1.0
