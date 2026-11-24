@@ -9,6 +9,11 @@ Releases are tagged on GitHub as plain `x.y.z` (for example `0.1.0`); see
 
 ## [Unreleased]
 
+### Fixed
+
+- The Wordfence 2FA code step on the login screen uses the dark login card
+  instead of a white box.
+
 ## [0.2.0] - 2026-11-24
 
 ### Added
