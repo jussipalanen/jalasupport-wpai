@@ -7,7 +7,7 @@
 **An AI-assisted customer support and ticket management mini-project built on WordPress and the Roots ecosystem.**
 
 [![CI](https://github.com/jussipalanen/jalasupport-wpai/actions/workflows/ci.yml/badge.svg)](https://github.com/jussipalanen/jalasupport-wpai/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/badge/release-0.1.0-6d28d9)](CHANGELOG.md)
+[![Release](https://img.shields.io/badge/release-0.2.0-6d28d9)](CHANGELOG.md)
 
 ![PHP](https://img.shields.io/badge/PHP-8.3%2B-777BB4?logo=php&logoColor=white)
 ![WordPress](https://img.shields.io/badge/WordPress-7.1-21759B?logo=wordpress&logoColor=white)
