@@ -14,6 +14,7 @@ use JalaSupport\Services\TicketRepository;
 use JalaSupport\Services\TicketTransfer;
 use JalaSupport\Services\TicketValidator;
 use JalaSupport\Support\AiAccessPolicy;
+use JalaSupport\Support\DemoMode;
 use JalaSupport\Support\Installer;
 use JalaSupport\Support\RateLimiter;
 use WP_CLI;
@@ -28,6 +29,7 @@ final class Plugin
         add_action('init', [Installer::class, 'maybeUpgrade'], 5);
         add_action('init', [new TicketPostType(), 'register']);
         (new TicketFields())->register();
+        (new DemoMode())->register();
 
         if (defined('WP_CLI') && WP_CLI) {
             $tickets = new TicketRepository();

@@ -71,6 +71,14 @@ if (! class_exists('WP_Post')) {
     }
 }
 
+if (! class_exists('WP_User')) {
+    class WP_User
+    {
+        public int $ID = 0;
+        public string $user_login = '';
+    }
+}
+
 if (! class_exists('WP_REST_Request')) {
     class WP_REST_Request
     {

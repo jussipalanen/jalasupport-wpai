@@ -23,6 +23,9 @@ web/app/mu-plugins/*/
 
 # Build output (theme assets are built inside the image)
 web/app/themes/jalasupport/public/build
+# Playground demo bundle and its sources (not part of the image)
+build
+demo
 
 # Runtime data
 web/app/uploads/*

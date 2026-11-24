@@ -1,0 +1,96 @@
+{
+    "$schema": "https://playground.wordpress.net/blueprint-schema.json",
+    "landingPage": "/",
+    "preferredVersions": {
+        "php": "8.3",
+        "wp": "latest"
+    },
+    "features": {
+        "networking": true
+    },
+    "steps": [
+        {
+            "step": "setSiteOptions",
+            "options": {
+                "blogname": "JalaSupport AI (demo)",
+                "permalink_structure": "/%postname%/"
+            }
+        },
+        {
+            "step": "defineWpConfigConsts",
+            "consts": {
+                "JALASUPPORT_DEMO": true,
+                "JALASUPPORT_DEMO_LOGIN": "demo",
+                "JALASUPPORT_DEMO_PASSWORD": "demo",
+                "AI_PROVIDER": "demo"
+            }
+        },
+        {
+            "step": "writeFile",
+            "path": "/wordpress/wp-content/mu-plugins/jalasupport-playground.php",
+            "data": {
+                "resource": "bundled",
+                "path": "/jalasupport-playground.php"
+            }
+        },
+        {
+            "step": "installPlugin",
+            "pluginData": {
+                "resource": "wordpress.org/plugins",
+                "slug": "advanced-custom-fields"
+            },
+            "options": {
+                "activate": true
+            }
+        },
+        {
+            "step": "installPlugin",
+            "pluginData": {
+                "resource": "bundled",
+                "path": "/jalasupport-plugin.zip"
+            },
+            "options": {
+                "activate": true
+            }
+        },
+        {
+            "step": "installTheme",
+            "themeData": {
+                "resource": "bundled",
+                "path": "/jalasupport-theme.zip"
+            },
+            "options": {
+                "activate": true
+            }
+        },
+        {
+            "step": "runPHP",
+            "code": "<?php require_once '/wordpress/wp-load.php'; wp_set_password(wp_generate_password(40, true, true), 1); $id = wp_insert_user(['user_login' => 'demo', 'user_pass' => 'demo', 'user_email' => 'demo.tester@example.local', 'display_name' => 'Demo Tester', 'role' => 'jalasupport_agent']); if (is_wp_error($id)) { throw new Exception($id->get_error_message()); }"
+        },
+        {
+            "step": "writeFile",
+            "path": "/tmp/jalasupport-demo-tickets.json",
+            "data": {
+                "resource": "bundled",
+                "path": "/tickets.json"
+            }
+        },
+        {
+            "step": "wp-cli",
+            "command": "wp jalasupport tickets import /tmp/jalasupport-demo-tickets.json --author=demo"
+        },
+        {
+            "step": "rm",
+            "path": "/tmp/jalasupport-demo-tickets.json"
+        },
+        {
+            "step": "wp-cli",
+            "command": "wp rewrite flush"
+        },
+        {
+            "step": "login",
+            "username": "demo",
+            "password": "demo"
+        }
+    ]
+}

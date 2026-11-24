@@ -25,6 +25,11 @@ define('JALASUPPORT_FILE', __FILE__);
 define('JALASUPPORT_PATH', plugin_dir_path(__FILE__));
 
 // Classes are autoloaded by the Bedrock root composer.json (JalaSupport\ namespace).
+// Standalone builds (e.g. the Playground demo) ship their own autoloader.
+if (! class_exists(Plugin::class) && file_exists(__DIR__ . '/vendor/autoload.php')) {
+    require __DIR__ . '/vendor/autoload.php';
+}
+
 if (! class_exists(Plugin::class)) {
     add_action('admin_notices', static function (): void {
         printf(

@@ -90,7 +90,9 @@ class App extends Composer
             'email' => $user->user_email,
             'avatar' => (string) get_avatar_url($user->ID, ['size' => 64]),
             'logout' => wp_logout_url(app_url()),
-            'admin' => current_user_can('edit_posts') || current_user_can('edit_tickets') ? admin_url() : null,
+            // The plugin's demo mode hides wp-admin from non-administrators.
+            'admin' => (current_user_can('edit_posts') || current_user_can('edit_tickets'))
+                && apply_filters('jalasupport_admin_access', true) ? admin_url() : null,
         ];
     }
 
