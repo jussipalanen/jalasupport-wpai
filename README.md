@@ -480,6 +480,22 @@ npm run dev        # Vite dev server with hot reload
   are saved only when the user clicks **Accept**, and the UI works fully when AI
   is not configured.
 
+**Search engines and AI assistants** (`app/seo.php`)
+
+- Only the public start page may be indexed. It has a meta description,
+  canonical URL, Open Graph tags and JSON-LD (`WebSite`, `WebPage`,
+  `SoftwareApplication`). Every other page (application, login screen,
+  WordPress' default posts and archives) is `noindex`.
+- Visibility follows **Settings > Reading > Search engine visibility**. While
+  search engines are discouraged, which `WP_ENV=development` and `staging`
+  always do, every page is `noindex` and the sitemap and `/llms.txt` return
+  404. When allowed, `/wp-sitemap.xml` lists only the start page (no users,
+  posts or taxonomies), `robots.txt` points to it, and `/llms.txt` describes
+  the app for AI assistants.
+- WordPress' block, global and emoji styles and scripts are not loaded on the
+  front end (the theme does not use them), and Apache serves the hashed build
+  assets with a one-year `immutable` cache header.
+
 </details>
 
 <details>

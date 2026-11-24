@@ -52,7 +52,7 @@ Application::configure()
 |
 */
 
-collect(['setup', 'filters', 'routes', 'login', 'favicons'])
+collect(['setup', 'filters', 'routes', 'login', 'favicons', 'seo'])
     ->each(function ($file) {
         if (! locate_template($file = "app/{$file}.php", true, true)) {
             wp_die(
