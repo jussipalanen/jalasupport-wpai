@@ -143,6 +143,25 @@ body.login {
     box-shadow: 0 0 0 2px #0f172a, 0 0 0 4px #6366f1;
 }
 
+/*
+ * Wordfence 2FA step: the plugin lays a white overlay over the login form.
+ * Match the card instead; opaque, so the username and password fields
+ * underneath do not show through.
+ */
+.login #wfls-prompt-overlay {
+    border-radius: inherit;
+    background-color: #0f1528;
+}
+
+.login .wfls-2fa-code-help {
+    color: #a5b4fc;
+}
+
+.login .wfls-2fa-code-help:hover,
+.login .wfls-2fa-code-help:focus {
+    color: #c7d2fe;
+}
+
 /* Notices */
 .login .message,
 .login .notice,
