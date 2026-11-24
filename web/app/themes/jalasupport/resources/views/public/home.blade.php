@@ -160,7 +160,7 @@
         </section>
     </main>
 
-    <footer class="mx-auto max-w-6xl border-t border-white/10 px-4 py-6 text-sm text-slate-500 sm:px-6 lg:px-8">
+    <footer class="mx-auto max-w-6xl border-t border-white/10 px-4 py-6 text-sm text-slate-400 sm:px-6 lg:px-8">
         &copy; {{ wp_date('Y') }} {{ $siteName }}
     </footer>
 @endsection
