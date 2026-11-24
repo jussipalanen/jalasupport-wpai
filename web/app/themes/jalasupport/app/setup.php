@@ -163,3 +163,29 @@ add_action('widgets_init', function () {
         'id' => 'sidebar-footer',
     ] + $config);
 });
+
+/**
+ * Keep the front end lean. The theme renders its own Tailwind UI and no
+ * block content, so the core block, global and classic theme styles and the
+ * emoji loader are unused there (about 100 KB of inline CSS on every page).
+ * The block editor in wp-admin is not affected.
+ */
+add_action('init', function () {
+    remove_action('wp_enqueue_scripts', 'wp_enqueue_global_styles');
+    remove_action('wp_footer', 'wp_enqueue_global_styles', 1);
+    remove_action('wp_enqueue_scripts', 'wp_enqueue_classic_theme_styles');
+    remove_action('wp_enqueue_scripts', 'wp_enqueue_emoji_styles');
+    remove_action('wp_print_styles', 'print_emoji_styles');
+    remove_action('wp_head', 'print_emoji_detection_script', 7);
+
+    // Discovery links that only advertise the WordPress version and
+    // legacy XML-RPC clients.
+    remove_action('wp_head', 'wp_generator');
+    remove_action('wp_head', 'rsd_link');
+    remove_action('wp_head', 'wp_shortlink_wp_head', 10);
+});
+
+add_action('wp_enqueue_scripts', function () {
+    wp_dequeue_style('wp-block-library');
+    wp_dequeue_style('wp-block-library-theme');
+}, 100);
