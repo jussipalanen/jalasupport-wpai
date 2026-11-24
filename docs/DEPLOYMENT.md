@@ -42,7 +42,7 @@ For example: `DRY_RUN=1 ./dev azure setup`.
 
 | Resource | Tier / settings | Cost |
 |---|---|---|
-| Azure Container Apps | Consumption, min replicas **0**, max **1**, 0.5 vCPU / 1 GiB | Free monthly grant (180,000 vCPU-s, 360,000 GiB-s, 2M requests) |
+| Azure Container Apps | Consumption, min replicas **0** (`APP_MIN_REPLICAS`), max **1**, 0.5 vCPU / 1 GiB | Free monthly grant (180,000 vCPU-s, 360,000 GiB-s, 2M requests) |
 | Azure Database for MySQL Flexible Server | Burstable **B1ms**, 32 GB, auto-grow off, no HA, no geo-backup, 7-day backups | Free for 12 months (750 h/month) |
 | Azure Container Registry | Standard, admin user disabled | Free for 12 months |
 | Azure Files | Standard LRS, shares `uploads` (5 GB) and `wflogs` (1 GB) | A few cents per month |
@@ -323,11 +323,59 @@ database firewall for your current IP address, which it looks up through
 Alternatively, on a free account, simply don't upgrade: Azure disables the
 subscription after 30 days and nothing is charged.
 
+## Custom domain
+
+Serve the app from your own domain, such as `support.example.com`, with a free
+certificate that Azure issues and renews. Use a subdomain: it needs only a
+CNAME record, which every DNS provider (GoDaddy included) supports.
+
+```bash
+./dev azure domain add support.example.com
+```
+
+The command:
+
+1. Prints the two DNS records to add at your DNS provider and waits for your
+   confirmation:
+
+   | Type | Name (GoDaddy: without your domain) | Value |
+   |---|---|---|
+   | CNAME | `support` | the app's Azure address (`…azurecontainerapps.io`) |
+   | TXT | `asuid.support` | the app's domain verification ID |
+
+2. Adds the domain to the container app with a managed certificate and waits
+   until it answers over HTTPS (usually 5-20 minutes).
+3. Sets `WP_HOME` and `WP_SITEURL` to the new address.
+4. Replaces the old address in the database with WP-CLI `search-replace`
+   (GUIDs are kept). It shows a dry run first and asks before applying.
+
+Then set the domain in `scripts/azure/config.env`, so `./dev azure setup`
+keeps it when it applies the app definition again:
+
+```bash
+APP_DOMAIN="support.example.com"
+```
+
+Sign in again afterwards: login cookies belong to the old address. The Azure
+address keeps working and WordPress redirects it to the domain.
+
+| Command | What it does |
+|---|---|
+| `./dev azure domain` | Show the custom domain, its certificate binding and the WordPress address (read-only) |
+| `./dev azure domain add <host>` | Add a domain and move WordPress to it |
+| `./dev azure domain update <host>` | Move to another domain, then remove the old domain and its certificate |
+| `./dev azure domain clean` | Move WordPress back to the Azure address, then remove the domain and its certificate |
+
+After `update` or `clean`, delete the old DNS records at your DNS provider and
+update or remove `APP_DOMAIN`. Every command supports `DRY_RUN=1`.
+
+Custom domains and managed certificates are free on Container Apps.
+
 ## Going always-on (no cold starts)
 
 | Option | Change | Approx. cost |
 |---|---|---|
-| Keep Container Apps | `az containerapp update -g rg-jalasupport -n jalasupport-app --min-replicas 1` | ~$8-12 a month |
+| Keep Container Apps | `APP_MIN_REPLICAS="1"` in `scripts/azure/config.env`, then `./dev azure setup` (or right away: `az containerapp update -g rg-jalasupport -n jalasupport-app --min-replicas 1`) | ~$8-12 a month |
 | App Service B1 (Linux) | Run the same image on App Service; use `/home` storage for uploads and `wflogs` | ~$13 a month |
 
 ## Security notes

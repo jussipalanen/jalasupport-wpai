@@ -29,6 +29,13 @@ Releases are tagged on GitHub as plain `x.y.z` (for example `0.1.0`); see
 - `JALASUPPORT_DEMO=true`: demo mode; only administrators can open wp-admin,
   other users are sent to the app (also after login), and the login screen
   can show the demo account.
+- **Custom domain for Azure** (`./dev azure domain add|update|clean`): adds
+  the domain with a free managed certificate after showing the DNS records,
+  moves WordPress to it and replaces the old address in the database (dry run
+  first). `APP_DOMAIN` in `scripts/azure/config.env` keeps the domain when
+  `setup.sh` runs again; `./dev azure status` lists it.
+- `APP_MIN_REPLICAS` in `scripts/azure/config.env`: `1` keeps the Azure app
+  always on (no cold starts); `0`, the default, scales to zero.
 
 ### Fixed
 
