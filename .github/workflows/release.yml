@@ -45,5 +45,5 @@ jobs:
         run: |
           scripts/release.sh notes "$TAG" > "$RUNNER_TEMP/notes.md"
           gh release create "$TAG" --verify-tag \
-            --title "JalaSupport AI $TAG" \
+            --title "$TAG" \
             --notes-file "$RUNNER_TEMP/notes.md"

@@ -690,7 +690,8 @@ described in [SECURITY.md](SECURITY.md).
 <br>
 
 Releases follow [Semantic Versioning](https://semver.org/) and are tagged on
-GitHub as plain **`x.y.z`** (for example `0.1.0`, no `v` prefix). Changes are
+GitHub as plain **`x.y.z`** (for example `0.1.0`, no `v` prefix), and the
+release title is the same version number. Changes are
 recorded in [CHANGELOG.md](CHANGELOG.md), whose sections become the GitHub
 release notes.
 

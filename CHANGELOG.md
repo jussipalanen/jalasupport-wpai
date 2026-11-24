@@ -28,6 +28,7 @@ Releases are tagged on GitHub as plain `x.y.z` (for example `0.1.0`); see
   login, and only aggregate numbers are shown. The numbers are cached for
   5 minutes and refreshed when a ticket changes; `JALASUPPORT_PUBLIC_STATS=false`
   hides them.
+- GitHub releases are titled with the version only (`0.3.0`), like the tags.
 - The front end no longer loads WordPress' block, global and emoji styles and
   scripts, which the theme does not use (about 100 KB less inline CSS per
   page). Hashed build assets are cached by browsers for a year.
